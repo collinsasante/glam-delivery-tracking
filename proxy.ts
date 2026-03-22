@@ -15,6 +15,30 @@ async function getSessionFromRequest(req: NextRequest) {
   }
 }
 
+function withSecurityHeaders(res: NextResponse): NextResponse {
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+  res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  res.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://res.cloudinary.com",
+      "font-src 'self'",
+      "connect-src 'self' https://*.airtable.com https://*.googleapis.com https://router.project-osrm.org https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ")
+  );
+  return res;
+}
+
 export default async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const path = nextUrl.pathname;
@@ -25,7 +49,7 @@ export default async function middleware(req: NextRequest) {
     path.startsWith("/api/track") ||
     path.startsWith("/api/auth")
   ) {
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   const session = await getSessionFromRequest(req);
@@ -38,7 +62,7 @@ export default async function middleware(req: NextRequest) {
       const dest = role === "Admin" ? "/dashboard" : "/rider";
       return NextResponse.redirect(new URL(dest, req.url));
     }
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   // All other routes require login
@@ -60,7 +84,7 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  return NextResponse.next();
+  return withSecurityHeaders(NextResponse.next());
 }
 
 export const config = {

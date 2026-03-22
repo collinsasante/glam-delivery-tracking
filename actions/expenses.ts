@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import type { SessionPayload } from "@/lib/session";
-import { createExpenseSchema } from "@/lib/validations";
+import { createExpenseSchema, adminCreateExpenseSchema } from "@/lib/validations";
 import {
   createExpense,
   updateExpenseStatus,
@@ -56,6 +56,32 @@ export async function updateExpenseStatusAction(
   } catch (err) {
     console.error("updateExpenseStatus error:", err);
     return { error: "Failed to update expense status." };
+  }
+}
+
+export async function adminCreateExpenseAction(data: unknown): Promise<ActionResult> {
+  const session = await auth();
+  if (!session || (session.user as SessionPayload).role !== "Admin") {
+    return { error: "Unauthorized" };
+  }
+
+  const parsed = adminCreateExpenseSchema.safeParse(data);
+  if (!parsed.success) {
+    const firstError = Object.values(
+      parsed.error.flatten().fieldErrors
+    )[0]?.[0];
+    return { error: firstError ?? "Invalid form data" };
+  }
+
+  const { riderId, ...expenseData } = parsed.data;
+
+  try {
+    await createExpense({ riderId, ...expenseData });
+    revalidatePath("/dashboard/expenses");
+    return { success: true };
+  } catch (err) {
+    console.error("adminCreateExpense error:", err);
+    return { error: "Failed to create expense." };
   }
 }
 

@@ -61,3 +61,7 @@ export const createExpenseSchema = z.object({
   date: z.string().min(1, "Date is required"),
   receiptUrl: z.string().optional(),
 });
+
+export const adminCreateExpenseSchema = createExpenseSchema.extend({
+  riderId: z.string().min(1, "Rider is required"),
+});
