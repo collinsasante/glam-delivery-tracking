@@ -1,3 +1,3 @@
 #!/bin/bash
 set -e
-npx @opennextjs/cloudflare build
+npx @cloudflare/next-on-pages@1
