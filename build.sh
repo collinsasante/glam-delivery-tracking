@@ -9,14 +9,9 @@ for dir in cloudflare middleware .build server-functions; do
   [ -d ".open-next/$dir" ] && cp -r ".open-next/$dir" ".open-next/assets/$dir"
 done
 
-# Create a thin _worker.js wrapper that catches unhandled exceptions and returns
-# them as JSON 500 responses (instead of an opaque Cloudflare Error 1101).
+# Wrap the default export with error catching so crashes return JSON 500
+# instead of an opaque Cloudflare Error 1101.
 cat > .open-next/assets/_worker.js << 'EOF'
-// Re-export Durable Object classes required by OpenNext
-export { DOQueueHandler } from "./worker.js";
-export { ShardedTagCache } from "./worker.js";
-export { BucketCachePurge } from "./worker.js";
-
 import inner from "./worker.js";
 
 export default {
