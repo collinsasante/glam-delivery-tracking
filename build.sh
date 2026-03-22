@@ -62,6 +62,10 @@ export default {
     try {
       const res = await inner.fetch(request, env, ctx);
       console.log("[worker] -> " + res.status + " " + path);
+      if (res.status >= 500) {
+        const body = await res.clone().text();
+        console.error("[worker] 500 body for " + path + ": " + body.slice(0, 1000));
+      }
       return res;
     } catch (e) {
       console.error("[worker] EXCEPTION on " + path + ": " + e.message);

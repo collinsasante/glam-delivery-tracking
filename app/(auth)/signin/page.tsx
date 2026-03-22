@@ -10,6 +10,11 @@ import { SignInForm } from "@/components/auth/SignInForm";
 export const metadata: Metadata = { title: "Sign In" };
 
 export default async function SignInPage() {
+  console.log("[signin] page rendering, env check:", {
+    AUTH_SECRET: !!process.env.AUTH_SECRET,
+    FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+    NEXT_PUBLIC_FIREBASE_API_KEY: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  });
   const session = await auth();
   if (session) {
     const user = session.user as SessionPayload;
