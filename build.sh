@@ -64,7 +64,11 @@ export default {
       console.log("[worker] -> " + res.status + " " + path);
       if (res.status >= 500) {
         const body = await res.clone().text();
-        console.error("[worker] 500 body for " + path + ": " + body.slice(0, 1000));
+        console.error("[worker] 500 body for " + path + ": " + body.slice(0, 2000));
+        return new Response(
+          JSON.stringify({ path, status: 500, body: body.slice(0, 2000) }),
+          { status: 500, headers: { "content-type": "application/json" } }
+        );
       }
       return res;
     } catch (e) {
