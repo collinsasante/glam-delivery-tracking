@@ -1,4 +1,4 @@
-name = "glam-delivery-tracking"
+name = "glam-delivery"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".open-next/assets"
