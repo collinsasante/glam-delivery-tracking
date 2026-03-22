@@ -33,7 +33,7 @@ export async function getSession(): Promise<{ user: SessionPayload } | null> {
 
   try {
     const { payload } = await jwtVerify(token, secret);
-    console.log("[session] session verified, role:", (payload as SessionPayload).role);
+    console.log("[session] session verified, role:", (payload as unknown as SessionPayload).role);
     return { user: payload as unknown as SessionPayload };
   } catch (e) {
     console.log("[session] jwtVerify failed:", e instanceof Error ? e.message : e);
