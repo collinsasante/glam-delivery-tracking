@@ -71,7 +71,7 @@ export function RiderExpenseForm() {
           {/* Expense Type */}
           <div className="space-y-1.5">
             <Label>Expense Type</Label>
-            <Select onValueChange={(v) => setValue("expenseType", v)}>
+            <Select onValueChange={(v) => setValue("expenseType", v as string)}>
               <SelectTrigger className={errors.expenseType ? "border-red-400" : ""}>
                 <SelectValue placeholder="Select type…" />
               </SelectTrigger>

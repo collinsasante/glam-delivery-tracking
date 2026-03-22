@@ -76,7 +76,7 @@ export function AdminExpenseForm({ riders }: Props) {
           {/* Rider */}
           <div className="space-y-1.5">
             <Label>Rider</Label>
-            <Select onValueChange={(v) => setValue("riderId", v)}>
+            <Select onValueChange={(v) => setValue("riderId", v as string)}>
               <SelectTrigger className={errors.riderId ? "border-red-400" : ""}>
                 <SelectValue placeholder="Select rider…" />
               </SelectTrigger>
@@ -96,7 +96,7 @@ export function AdminExpenseForm({ riders }: Props) {
           {/* Expense Type */}
           <div className="space-y-1.5">
             <Label>Expense Type</Label>
-            <Select onValueChange={(v) => setValue("expenseType", v)}>
+            <Select onValueChange={(v) => setValue("expenseType", v as string)}>
               <SelectTrigger className={errors.expenseType ? "border-red-400" : ""}>
                 <SelectValue placeholder="Select type…" />
               </SelectTrigger>
