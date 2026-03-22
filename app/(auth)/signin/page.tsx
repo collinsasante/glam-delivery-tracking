@@ -2,10 +2,15 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import type { SessionPayload } from "@/lib/session";
-import { SignInForm } from "@/components/auth/SignInForm";
+
+const SignInForm = dynamic(
+  () => import("@/components/auth/SignInForm").then((m) => m.SignInForm),
+  { ssr: false }
+);
 
 export const metadata: Metadata = { title: "Sign In" };
 
