@@ -1,48 +1,24 @@
 #!/bin/bash
 set -e
+
+# Patch OpenNext 1.17.1 to bundle Next.js 16's prefetch-hints.json manifest.
+# The glob in load-manifest.js only matches *-manifest.json and
+# required-server-files.json — prefetch-hints.json is silently excluded, which
+# causes every route to crash with "Unexpected loadManifest() call!".
+node -e "
+const fs = require('fs');
+const f = 'node_modules/@opennextjs/cloudflare/dist/cli/build/patches/plugins/load-manifest.js';
+const src = fs.readFileSync(f, 'utf8');
+const patched = src.replace(
+  '{*-manifest,required-server-files}.json',
+  '{*-manifest,required-server-files,prefetch-hints}.json'
+);
+if (patched === src) { console.error('[pre-build] patch not applied — pattern not found'); process.exit(1); }
+fs.writeFileSync(f, patched);
+console.log('[pre-build] OpenNext patched to include prefetch-hints.json');
+"
+
 npx @opennextjs/cloudflare build
-
-# Patch: OpenNext 1.17.1 doesn't know about the prefetch-hints.json manifest
-# introduced in Next.js 16. Its loadManifest() throws "Unexpected call!" for it.
-# Find the generated worker chunk that contains that throw and make it return {}
-# for prefetch-hints so the server can initialise without crashing.
-node << 'PATCHEOF'
-const fs = require("fs");
-const path = require("path");
-
-const dirs = [
-  ".open-next/server-functions/default",
-  ".open-next",
-];
-
-let patched = false;
-for (const dir of dirs) {
-  if (!fs.existsSync(dir)) continue;
-  for (const file of fs.readdirSync(dir)) {
-    if (!/\.(js|mjs)$/.test(file)) continue;
-    const fp = path.join(dir, file);
-    let code;
-    try { code = fs.readFileSync(fp, "utf8"); } catch { continue; }
-    if (!code.includes("Unexpected loadManifest")) continue;
-
-    const patched_code = code.replace(
-      /throw new Error\(`Unexpected loadManifest\(\$\{([a-zA-Z_$][\w$]*)\}\) call!`\)/,
-      (match, v) =>
-        `if (${v} && ${v}.includes("prefetch-hints")) { return {}; } ${match}`
-    );
-
-    if (patched_code !== code) {
-      fs.writeFileSync(fp, patched_code);
-      console.log("[build] Patched prefetch-hints.json in", fp);
-      patched = true;
-    }
-  }
-}
-if (!patched) {
-  console.error("[build] ERROR: Could not find loadManifest throw to patch");
-  process.exit(1);
-}
-PATCHEOF
 
 # Copy the OpenNext worker entry point and all its sibling module dependencies
 # into the assets dir so wrangler can resolve relative imports when bundling.
@@ -51,7 +27,7 @@ for dir in cloudflare middleware .build server-functions; do
   [ -d ".open-next/$dir" ] && cp -r ".open-next/$dir" ".open-next/assets/$dir"
 done
 
-# Wrap default export with error catching so crashes surface as JSON 500.
+# Thin wrapper: catch unhandled exceptions and log 500 bodies for debugging.
 cat > .open-next/assets/_worker.js << 'EOF'
 import inner from "./worker.js";
 
@@ -64,18 +40,13 @@ export default {
       console.log("[worker] -> " + res.status + " " + path);
       if (res.status >= 500) {
         const body = await res.clone().text();
-        console.error("[worker] 500 body for " + path + ": " + body.slice(0, 2000));
-        return new Response(
-          JSON.stringify({ path, status: 500, body: body.slice(0, 2000) }),
-          { status: 500, headers: { "content-type": "application/json" } }
-        );
+        console.error("[worker] 500 body: " + body.slice(0, 500));
       }
       return res;
     } catch (e) {
-      console.error("[worker] EXCEPTION on " + path + ": " + e.message);
-      console.error(e.stack ?? "(no stack)");
+      console.error("[worker] EXCEPTION: " + e.message + "\n" + e.stack);
       return new Response(
-        JSON.stringify({ error: e.message, stack: e.stack, path }),
+        JSON.stringify({ error: e.message, path }),
         { status: 500, headers: { "content-type": "application/json" } }
       );
     }
