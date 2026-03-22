@@ -62,7 +62,7 @@ export function AdminExpenseForm({ riders }: Props) {
         toast.error(result.error);
       } else {
         toast.success("Expense created");
-        router.push("/dashboard/expenses");
+        router.push("/expenses");
       }
     });
   }
@@ -171,7 +171,7 @@ export function AdminExpenseForm({ riders }: Props) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push("/dashboard/expenses")}
+          onClick={() => router.push("/expenses")}
         >
           Cancel
         </Button>

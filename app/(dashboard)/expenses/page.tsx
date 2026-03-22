@@ -41,7 +41,7 @@ export default async function ExpensesPage() {
               </span>
             </div>
           )}
-          <Link href="/dashboard/expenses/new">
+          <Link href="/expenses/new">
             <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
               <Plus className="h-4 w-4" />
               Add Expense
