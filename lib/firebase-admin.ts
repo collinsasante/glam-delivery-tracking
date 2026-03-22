@@ -13,4 +13,14 @@ function getAdminApp() {
   });
 }
 
-export const adminAuth = { verifyIdToken: (token: string) => getAuth(getAdminApp()).verifyIdToken(token) };
+function auth() {
+  return getAuth(getAdminApp());
+}
+
+export const adminAuth = {
+  verifyIdToken: (token: string) => auth().verifyIdToken(token),
+  createUser: (props: Parameters<ReturnType<typeof getAuth>["createUser"]>[0]) => auth().createUser(props),
+  getUserByEmail: (email: string) => auth().getUserByEmail(email),
+  updateUser: (uid: string, props: Parameters<ReturnType<typeof getAuth>["updateUser"]>[1]) => auth().updateUser(uid, props),
+  deleteUser: (uid: string) => auth().deleteUser(uid),
+};
