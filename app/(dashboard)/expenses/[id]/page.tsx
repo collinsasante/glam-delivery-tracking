@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Receipt, User, Calendar, FileText, MessageSquare } from "lucide-react";
+import { ChevronLeft, Receipt, User, Calendar, FileText, MessageSquare, ExternalLink } from "lucide-react";
 import { getExpenseById } from "@/services/expenses";
 import { getRiderById } from "@/services/riders";
 import { Card, CardContent } from "@/components/ui/card";
@@ -119,16 +120,26 @@ export default async function ExpenseDetailPage({ params }: Props) {
       {expense.receiptUrl && (
         <Card className="border-gray-200 shadow-none">
           <CardContent className="p-5">
-            <p className="text-xs text-gray-400 mb-3">Receipt</p>
-            <a
-              href={expense.receiptUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-red-800 hover:text-red-700 font-medium"
-            >
-              <Receipt className="h-4 w-4" />
-              View receipt
-            </a>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-400">Receipt</p>
+              <a
+                href={expense.receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-red-800 hover:text-red-700"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open full size
+              </a>
+            </div>
+            <div className="relative w-full rounded-xl overflow-hidden border border-gray-100 bg-gray-50" style={{ height: "240px" }}>
+              <Image
+                src={expense.receiptUrl}
+                alt="Receipt"
+                fill
+                className="object-contain"
+              />
+            </div>
           </CardContent>
         </Card>
       )}

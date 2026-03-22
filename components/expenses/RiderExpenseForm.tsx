@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ const EXPENSE_TYPES = ["Fuel", "Maintenance", "Toll", "Parking", "Food", "Other"
 export function RiderExpenseForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [receiptUrl, setReceiptUrl] = useState<string | undefined>();
 
   const {
     register,
@@ -129,14 +131,16 @@ export function RiderExpenseForm() {
             />
           </div>
 
-          {/* Receipt URL */}
+          {/* Receipt image */}
           <div className="space-y-1.5">
-            <Label htmlFor="receiptUrl">Receipt URL (optional)</Label>
-            <Input
-              id="receiptUrl"
-              type="url"
-              {...register("receiptUrl")}
-              placeholder="https://…"
+            <Label>Receipt (optional)</Label>
+            <ImageUpload
+              value={receiptUrl}
+              onChange={(url) => {
+                setReceiptUrl(url);
+                setValue("receiptUrl", url ?? "");
+              }}
+              disabled={isPending}
             />
           </div>
         </CardContent>
