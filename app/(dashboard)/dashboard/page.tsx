@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 interface Props {
   searchParams: Promise<{

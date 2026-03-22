@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import type { Metadata } from "next";
 import { SignUpForm } from "@/components/auth/SignUpForm";
