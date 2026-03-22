@@ -23,14 +23,20 @@ export async function createSession(payload: SessionPayload): Promise<string> {
 }
 
 export async function getSession(): Promise<{ user: SessionPayload } | null> {
+  console.log("[session] getSession called, AUTH_SECRET set:", !!process.env.AUTH_SECRET);
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  if (!token) {
+    console.log("[session] no session cookie found");
+    return null;
+  }
 
   try {
     const { payload } = await jwtVerify(token, secret);
+    console.log("[session] session verified, role:", (payload as SessionPayload).role);
     return { user: payload as unknown as SessionPayload };
-  } catch {
+  } catch (e) {
+    console.log("[session] jwtVerify failed:", e instanceof Error ? e.message : e);
     return null;
   }
 }
