@@ -2,11 +2,20 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import type { SessionPayload } from "@/lib/session";
 import { SignInForm } from "@/components/auth/SignInForm";
 
 export const metadata: Metadata = { title: "Sign In" };
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const session = await auth();
+  if (session) {
+    const user = session.user as SessionPayload;
+    redirect(user.role === "Admin" ? "/dashboard" : "/rider");
+  }
+
   return (
     <div className="bg-white rounded-2xl p-8 shadow-sm ring-1 ring-gray-200">
       <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
