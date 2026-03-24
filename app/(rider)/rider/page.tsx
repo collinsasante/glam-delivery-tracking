@@ -153,6 +153,7 @@ export default async function RiderPage() {
               stop={stop ?? undefined}
               isClockedIn={clockedIn}
               variant="pending"
+              hasActiveDelivery={active.length > 0}
             />
           ))}
         </section>

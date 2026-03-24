@@ -16,6 +16,7 @@ interface Props {
   stop?: DeliveryStop;
   isClockedIn: boolean;
   variant: "pending" | "active" | "completed";
+  hasActiveDelivery?: boolean;
 }
 
 const priorityConfig = {
@@ -24,34 +25,38 @@ const priorityConfig = {
   Express: { label: "Express", className: "bg-orange-100 text-orange-700" },
 };
 
-export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, variant }: Props) {
+export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, variant, hasActiveDelivery }: Props) {
   const [isPending, startTransition] = useTransition();
   const { capture } = useGeolocation();
   const { isClockedIn } = useClockIn();
 
-  // Use context value (live) but fall back to initial prop if context hasn't loaded
-  const clockedIn = isClockedIn ?? initialClockedIn;
+  // Context starts false by default — use OR so a true context value always wins
+  const clockedIn = isClockedIn || initialClockedIn;
 
   function handleStart() {
+    console.log("[DeliveryCard] handleStart", {
+      clockedIn,
+      isClockedInFromContext: isClockedIn,
+      initialClockedIn,
+      stop: stop?.id ?? null,
+    });
     if (!clockedIn) {
       toast.error("Please clock in to start your shift before accepting deliveries.");
       return;
     }
-    if (!stop) return;
     startTransition(async () => {
-      const result = await startDeliveryAction(delivery.id, stop.id);
+      const result = await startDeliveryAction(delivery.id, stop?.id ?? null);
       if ("error" in result) toast.error(result.error);
       else toast.success("Delivery started");
     });
   }
 
   function handleArrived() {
-    if (!stop) return;
     startTransition(async () => {
       const gps = await capture();
-      const result = await markArrivedAction(delivery.id, stop.id, {
+      const result = await markArrivedAction(delivery.id, stop?.id ?? null, {
         gps: gps ?? undefined,
-        startedAt: stop.startedAt ?? undefined,
+        startedAt: stop?.startedAt ?? undefined,
       });
       if ("error" in result) toast.error(result.error);
       else toast.success("Marked as delivered!");
@@ -134,21 +139,28 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
 
       {/* Actions */}
       {variant === "pending" && (
-        <Button
-          className="w-full gap-2 bg-red-800 hover:bg-red-900 text-white"
-          size="sm"
-          onClick={handleStart}
-          disabled={isPending || !stop}
-        >
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Package className="h-4 w-4" />
-              Start delivery
-            </>
+        <>
+          {hasActiveDelivery && (
+            <p className="text-[11px] text-amber-600 text-center">
+              Finish your active delivery first
+            </p>
           )}
-        </Button>
+          <Button
+            className="w-full gap-2 bg-red-800 hover:bg-red-900 text-white disabled:opacity-40"
+            size="sm"
+            onClick={handleStart}
+            disabled={isPending || !!hasActiveDelivery}
+          >
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Package className="h-4 w-4" />
+                Start delivery
+              </>
+            )}
+          </Button>
+        </>
       )}
 
       {variant === "active" && (

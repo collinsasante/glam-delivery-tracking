@@ -47,6 +47,7 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
       const result = await action();
 
       if ("error" in result) {
+        console.error("[ClockIn] action error:", result.error);
         toast.error(result.error);
         return;
       }
@@ -57,12 +58,14 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
         setClockInTime(undefined);
         setElapsed("");
         toast.success("Clocked out — shift ended");
+        console.log("[ClockIn] Clocked OUT — context set to false");
       } else {
         setIsClockedIn(true);
         setContextClockedIn(true);
         setHasClockInToday(true);
         setClockInTime(result.timestamp);
         toast.success("Clocked in — ready for deliveries");
+        console.log("[ClockIn] Clocked IN — context set to true");
       }
       router.refresh();
     });

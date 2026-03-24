@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 
 interface Suggestion {
-  placeId: string;
   description: string;
   mainText: string;
+  lat: number;
+  lon: number;
 }
 
 interface Props {
@@ -15,17 +16,6 @@ interface Props {
   onChange: (value: string, coords?: { lat: number; lon: number }) => void;
   placeholder?: string;
   id?: string;
-}
-
-async function getPlaceCoords(placeId: string): Promise<{ lat: number; lon: number } | undefined> {
-  try {
-    const res = await fetch(`/api/places?placeId=${encodeURIComponent(placeId)}`);
-    const data = await res.json();
-    const loc = data?.result?.geometry?.location;
-    if (loc) return { lat: loc.lat, lon: loc.lng };
-  } catch {
-    // ignore
-  }
 }
 
 export function LocationAutocomplete({ value, onChange, placeholder, id }: Props) {
@@ -42,13 +32,7 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
     try {
       const res = await fetch(`/api/places?input=${encodeURIComponent(q)}`);
       const data = await res.json();
-      const results: Suggestion[] = (data.predictions ?? []).map(
-        (p: { place_id: string; description: string; structured_formatting: { main_text: string } }) => ({
-          placeId: p.place_id,
-          description: p.description,
-          mainText: p.structured_formatting?.main_text ?? p.description,
-        })
-      );
+      const results: Suggestion[] = data.predictions ?? [];
       setSuggestions(results);
       setOpen(results.length > 0);
     } catch {
@@ -64,12 +48,11 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
     return () => clearTimeout(debounceRef.current);
   }, [query, search]);
 
-  async function selectSuggestion(s: Suggestion) {
+  function selectSuggestion(s: Suggestion) {
     setQuery(s.description);
     setOpen(false);
     setActiveIndex(-1);
-    const coords = await getPlaceCoords(s.placeId);
-    onChange(s.description, coords);
+    onChange(s.description, { lat: s.lat, lon: s.lon });
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -113,7 +96,7 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {suggestions.map((s, i) => (
             <button
-              key={s.placeId}
+              key={i}
               type="button"
               className={`w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors ${
                 i === activeIndex ? "bg-red-50" : "hover:bg-gray-50"
