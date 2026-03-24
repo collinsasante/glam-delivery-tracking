@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 
 interface Suggestion {
-  name: string;
-  fullName: string;
-  lat: number;
-  lon: number;
+  placeId: string;
+  description: string;
+  mainText: string;
 }
 
 interface Props {
@@ -16,6 +15,21 @@ interface Props {
   onChange: (value: string, coords?: { lat: number; lon: number }) => void;
   placeholder?: string;
   id?: string;
+}
+
+const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+async function getPlaceCoords(placeId: string): Promise<{ lat: number; lon: number } | undefined> {
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${MAPS_KEY}`
+    );
+    const data = await res.json();
+    const loc = data?.result?.geometry?.location;
+    if (loc) return { lat: loc.lat, lon: loc.lng };
+  } catch {
+    // ignore
+  }
 }
 
 export function LocationAutocomplete({ value, onChange, placeholder, id }: Props) {
@@ -26,36 +40,20 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
   const [activeIndex, setActiveIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Ghana bounding box for Photon
-  const GHANA_BBOX = "-3.26,4.74,1.2,11.17";
-
   const search = useCallback(async (q: string) => {
-    if (q.length < 3) {
-      setSuggestions([]);
-      setOpen(false);
-      return;
-    }
+    if (q.length < 3) { setSuggestions([]); setOpen(false); return; }
     setLoading(true);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=en&bbox=${GHANA_BBOX}`,
-        { signal: controller.signal }
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&components=country:gh&language=en&key=${MAPS_KEY}`
       );
-      clearTimeout(timeoutId);
       const data = await res.json();
-      const results: Suggestion[] = (data.features ?? []).map(
-        (f: { properties: Record<string, string>; geometry: { coordinates: number[] } }) => {
-          const p = f.properties;
-          const parts = [p.name, p.city, p.state, p.country].filter(Boolean);
-          return {
-            name: p.name ?? parts[0] ?? q,
-            fullName: parts.join(", "),
-            lat: f.geometry.coordinates[1],
-            lon: f.geometry.coordinates[0],
-          };
-        }
+      const results: Suggestion[] = (data.predictions ?? []).map(
+        (p: { place_id: string; description: string; structured_formatting: { main_text: string } }) => ({
+          placeId: p.place_id,
+          description: p.description,
+          mainText: p.structured_formatting?.main_text ?? p.description,
+        })
       );
       setSuggestions(results);
       setOpen(results.length > 0);
@@ -72,11 +70,12 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
     return () => clearTimeout(debounceRef.current);
   }, [query, search]);
 
-  function selectSuggestion(s: Suggestion) {
-    setQuery(s.fullName);
-    onChange(s.fullName, { lat: s.lat, lon: s.lon });
+  async function selectSuggestion(s: Suggestion) {
+    setQuery(s.description);
     setOpen(false);
     setActiveIndex(-1);
+    const coords = await getPlaceCoords(s.placeId);
+    onChange(s.description, coords);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -120,7 +119,7 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {suggestions.map((s, i) => (
             <button
-              key={i}
+              key={s.placeId}
               type="button"
               className={`w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors ${
                 i === activeIndex ? "bg-red-50" : "hover:bg-gray-50"
@@ -129,8 +128,8 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
             >
               <MapPin className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{s.name}</p>
-                <p className="text-xs text-gray-400 truncate">{s.fullName}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{s.mainText}</p>
+                <p className="text-xs text-gray-400 truncate">{s.description}</p>
               </div>
             </button>
           ))}
