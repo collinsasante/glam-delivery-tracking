@@ -12,10 +12,21 @@ import inner from "./worker.js";
 
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    // Serve static assets directly via the ASSETS binding
+    if (
+      url.pathname.startsWith("/_next/static/") ||
+      url.pathname.startsWith("/_next/image/") ||
+      url.pathname === "/favicon.ico" ||
+      url.pathname === "/logo.png"
+    ) {
+      const assetResp = await env.ASSETS.fetch(request);
+      if (assetResp.status !== 404) return assetResp;
+    }
     try {
       return await inner.fetch(request, env, ctx);
     } catch (e) {
-      console.error("[worker] " + request.method + " " + new URL(request.url).pathname + " — " + e.message);
+      console.error("[worker] " + request.method + " " + url.pathname + " — " + e.message);
       return new Response(JSON.stringify({ error: e.message }), {
         status: 500,
         headers: { "content-type": "application/json" },

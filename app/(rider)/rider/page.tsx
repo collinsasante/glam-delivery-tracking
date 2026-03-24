@@ -16,7 +16,6 @@ import { Package, Plus } from "lucide-react";
 
 export const metadata: Metadata = { title: "My Deliveries" };
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
 
 export default async function RiderPage() {
   const session = await auth();

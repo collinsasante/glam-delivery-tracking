@@ -1,4 +1,3 @@
-export const runtime = "edge";
 
 // NextAuth has been removed. Auth is now handled by /api/auth/session.
 export function GET() {
