@@ -101,6 +101,16 @@ export function SignUpForm() {
           Sign in
         </Link>
       </p>
+
+      <div className="pt-1 border-t border-gray-100 text-center">
+        <Link
+          href="/board"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          View live delivery board
+        </Link>
+      </div>
     </form>
   );
 }
