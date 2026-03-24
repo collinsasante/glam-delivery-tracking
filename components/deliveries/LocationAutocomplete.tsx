@@ -17,13 +17,9 @@ interface Props {
   id?: string;
 }
 
-const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
-
 async function getPlaceCoords(placeId: string): Promise<{ lat: number; lon: number } | undefined> {
   try {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${MAPS_KEY}`
-    );
+    const res = await fetch(`/api/places?placeId=${encodeURIComponent(placeId)}`);
     const data = await res.json();
     const loc = data?.result?.geometry?.location;
     if (loc) return { lat: loc.lat, lon: loc.lng };
@@ -44,9 +40,7 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
     if (q.length < 3) { setSuggestions([]); setOpen(false); return; }
     setLoading(true);
     try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&components=country:gh&language=en&key=${MAPS_KEY}`
-      );
+      const res = await fetch(`/api/places?input=${encodeURIComponent(q)}`);
       const data = await res.json();
       const results: Suggestion[] = (data.predictions ?? []).map(
         (p: { place_id: string; description: string; structured_formatting: { main_text: string } }) => ({

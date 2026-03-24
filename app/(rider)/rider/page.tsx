@@ -10,6 +10,7 @@ import {
 } from "@/services/clockEvents";
 import Link from "next/link";
 import { ClockInButton } from "@/components/riders/ClockInButton";
+import { ClockInProvider } from "@/components/riders/ClockInContext";
 import { DeliveryCard } from "@/components/deliveries/DeliveryCard";
 import { Button } from "@/components/ui/button";
 import { Package, Plus } from "lucide-react";
@@ -64,6 +65,7 @@ export default async function RiderPage() {
   }));
 
   return (
+    <ClockInProvider initialClockedIn={clockedIn}>
     <div className="space-y-4">
       {/* Shift status */}
       <ClockInButton
@@ -215,5 +217,6 @@ export default async function RiderPage() {
         </div>
       )}
     </div>
+    </ClockInProvider>
   );
 }

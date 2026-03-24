@@ -7,6 +7,7 @@ import { Clock, LogIn, LogOut } from "lucide-react";
 import { clockInAction, clockOutAction } from "@/actions/clockEvents";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useClockIn } from "./ClockInContext";
 
 interface Props {
   initialClockedIn: boolean;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInToday: initialHasClockInToday }: Props) {
+  const { setIsClockedIn: setContextClockedIn } = useClockIn();
   const [isClockedIn, setIsClockedIn] = useState(initialClockedIn);
   const [clockInTime, setClockInTime] = useState(clockInTimestamp);
   const [hasClockInToday, setHasClockInToday] = useState(initialHasClockInToday ?? false);
@@ -51,11 +53,13 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
 
       if (isClockedIn) {
         setIsClockedIn(false);
+        setContextClockedIn(false);
         setClockInTime(undefined);
         setElapsed("");
         toast.success("Clocked out — shift ended");
       } else {
         setIsClockedIn(true);
+        setContextClockedIn(true);
         setHasClockInToday(true);
         setClockInTime(result.timestamp);
         toast.success("Clocked in — ready for deliveries");

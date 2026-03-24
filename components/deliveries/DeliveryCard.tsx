@@ -9,6 +9,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 import type { Delivery } from "@/types/delivery";
 import type { DeliveryStop } from "@/types/stop";
+import { useClockIn } from "@/components/riders/ClockInContext";
 
 interface Props {
   delivery: Delivery;
@@ -23,12 +24,16 @@ const priorityConfig = {
   Express: { label: "Express", className: "bg-orange-100 text-orange-700" },
 };
 
-export function DeliveryCard({ delivery, stop, isClockedIn, variant }: Props) {
+export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, variant }: Props) {
   const [isPending, startTransition] = useTransition();
   const { capture } = useGeolocation();
+  const { isClockedIn } = useClockIn();
+
+  // Use context value (live) but fall back to initial prop if context hasn't loaded
+  const clockedIn = isClockedIn ?? initialClockedIn;
 
   function handleStart() {
-    if (!isClockedIn) {
+    if (!clockedIn) {
       toast.error("Please clock in to start your shift before accepting deliveries.");
       return;
     }
