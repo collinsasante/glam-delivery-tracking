@@ -54,6 +54,23 @@ export async function isClockedIn(riderId: string): Promise<boolean> {
   return last?.eventType === "Clock In";
 }
 
+/**
+ * If the rider's last clock-in was from a previous day, auto-create a clock-out
+ * so they start the new day clocked out. Call this before checking isClockedIn.
+ */
+export async function autoClockOutIfNeeded(riderId: string): Promise<void> {
+  const last = await getLastClockEvent(riderId);
+  if (!last || last.eventType !== "Clock In") return;
+
+  const today = new Date().toISOString().split("T")[0];
+  if (last.date === today) return; // clocked in today — nothing to do
+
+  // Last clock-in was a previous day — auto clock out now
+  const clockInTime = new Date(last.timestamp);
+  const durationMins = Math.round((Date.now() - clockInTime.getTime()) / 60000);
+  await createClockEvent({ riderId, eventType: "Clock Out", durationMins });
+}
+
 export async function createClockEvent(data: {
   riderId: string;
   eventType: "Clock In" | "Clock Out";

@@ -7,13 +7,12 @@ import {
   isClockedIn,
   getLastClockEvent,
   getTodayClockEvents,
+  autoClockOutIfNeeded,
 } from "@/services/clockEvents";
-import Link from "next/link";
 import { ClockInButton } from "@/components/riders/ClockInButton";
 import { ClockInProvider } from "@/components/riders/ClockInContext";
 import { DeliveryCard } from "@/components/deliveries/DeliveryCard";
-import { Button } from "@/components/ui/button";
-import { Package, Plus } from "lucide-react";
+import { Package } from "lucide-react";
 
 export const metadata: Metadata = { title: "My Deliveries" };
 export const dynamic = "force-dynamic";
@@ -23,6 +22,9 @@ export default async function RiderPage() {
   if (!session) redirect("/signin");
 
   const riderId = session.user?.id!;
+
+  // Auto clock-out if rider forgot to clock out yesterday
+  await autoClockOutIfNeeded(riderId);
 
   const [deliveries, clockedIn, lastEvent, todayEvents] = await Promise.all([
     getDeliveriesForRider(riderId),
@@ -189,17 +191,6 @@ export default async function RiderPage() {
           </p>
         </div>
       )}
-
-      {/* Submit expense */}
-      <Link href="/rider/expenses/new">
-        <Button
-          variant="outline"
-          className="w-full gap-2 border-dashed border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400"
-        >
-          <Plus className="h-4 w-4" />
-          Submit an Expense
-        </Button>
-      </Link>
 
       {/* Shift history */}
       {clockHistory.length > 0 && (

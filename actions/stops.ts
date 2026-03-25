@@ -9,25 +9,47 @@ type ActionResult = { success: true } | { error: string };
 
 export async function startDeliveryAction(
   deliveryId: string,
-  stopId: string | null
+  stopId: string | null,
+  riderGps?: { lat: number; lng: number }
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session) return { error: "Unauthorized" };
 
   try {
     const now = new Date();
+    const delivery = await getDeliveryById(deliveryId);
+    if (!delivery) return { error: "Delivery not found." };
 
-    // If no stop exists yet, auto-create one from the delivery's dropoff location
+    // Calculate actual distance from rider's GPS to dropoff (if GPS available)
+    let distanceKm: number | undefined = delivery.distance ?? undefined;
+    if (riderGps && delivery.dropoffCoordinates) {
+      try {
+        const { lat: dLat, lng: dLng } = delivery.dropoffCoordinates;
+        const url = `https://router.project-osrm.org/route/v1/driving/${riderGps.lng},${riderGps.lat};${dLng},${dLat}?overview=false`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.routes?.[0]) {
+            distanceKm = Math.round((data.routes[0].distance / 1000) * 10) / 10;
+          }
+        }
+      } catch {
+        // distance calculation failed — keep existing or undefined
+      }
+    }
+
+    // If no stop exists yet, auto-create one
     let resolvedStopId = stopId;
     if (!resolvedStopId) {
-      const delivery = await getDeliveryById(deliveryId);
-      if (!delivery) return { error: "Delivery not found." };
+      const fromLocation = riderGps
+        ? `${riderGps.lat.toFixed(5)},${riderGps.lng.toFixed(5)}`
+        : (delivery.warehouse ?? "Warehouse");
       const stop = await createStop({
         deliveryRecordId: deliveryId,
         stopNumber: 1,
-        fromLocation: delivery.warehouse ?? "Warehouse",
+        fromLocation,
         toLocation: delivery.dropoffLocation,
-        ...(delivery.distance != null && { distanceKm: delivery.distance }),
+        ...(distanceKm !== undefined && { distanceKm }),
       });
       resolvedStopId = stop.id;
     }
@@ -35,6 +57,14 @@ export async function startDeliveryAction(
     await updateDeliveryStatus(deliveryId, "In Progress", {
       pickupTime: now.toTimeString().slice(0, 5),
     });
+
+    // Update delivery distance with measured value if available
+    if (distanceKm !== undefined && distanceKm !== delivery.distance) {
+      await import("@/services/deliveries").then(({ updateDelivery }) =>
+        updateDelivery(deliveryId, { distance: distanceKm })
+      );
+    }
+
     await startStop(resolvedStopId);
     revalidatePath("/rider");
     return { success: true };

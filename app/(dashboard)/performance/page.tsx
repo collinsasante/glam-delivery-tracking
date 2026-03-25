@@ -37,11 +37,9 @@ const periodLabels: Record<Period, string> = {
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
   const period = (params.period ?? "daily") as Period;
-  const dateFilter = period === "daily" ? "today" : period === "weekly" ? "week" : "month";
-
   const [riders, deliveries] = await Promise.all([
     getRiders(),
-    getDeliveries({ date: dateFilter, status: "Completed" }),
+    getDeliveries({ status: "Completed" }),
   ]);
 
   const riderScores = await Promise.all(

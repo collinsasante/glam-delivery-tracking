@@ -112,6 +112,7 @@ export async function updateDeliveryAction(
       priority,
       deliveryDate,
       notes,
+      ...(destinations[0].distanceKm != null && { distance: destinations[0].distanceKm }),
     });
 
     await createStop({

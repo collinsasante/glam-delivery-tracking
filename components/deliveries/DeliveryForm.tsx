@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createDeliverySchema } from "@/lib/validations";
-import { createDeliveryAction } from "@/actions/deliveries";
+import { createDeliveryAction, updateDeliveryAction } from "@/actions/deliveries";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, MapPin, Navigation } from "lucide-react";
+import { Plus, Trash2, Loader2, MapPin } from "lucide-react";
 import type { Rider } from "@/types/rider";
+import type { Delivery } from "@/types/delivery";
 
 type FormData = z.infer<typeof createDeliverySchema>;
 
 interface Props {
   riders: Rider[];
+  deliveryId?: string;
+  initialDelivery?: Delivery;
 }
 
 const WAREHOUSES = [
@@ -42,10 +45,17 @@ const PRIORITIES = [
   { value: "Express", label: "Express" },
 ];
 
-export function DeliveryForm({ riders }: Props) {
+const WAREHOUSE_COORDS: Record<string, { lat: number; lng: number }> = {
+  "Pantang West": { lat: 5.7122928, lng: -0.1894738 },
+  Amrahia: { lat: 5.7641229, lng: -0.1398611 },
+};
+
+export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [calculatingDist, setCalculatingDist] = useState<number | null>(null);
+
+  const isEdit = !!deliveryId && !!initialDelivery;
 
   const {
     register,
@@ -56,21 +66,41 @@ export function DeliveryForm({ riders }: Props) {
     control,
   } = useForm<FormData>({
     resolver: zodResolver(createDeliverySchema),
-    defaultValues: {
-      warehouse: "Pantang West",
-      priority: "Normal",
-      deliveryDate: new Date().toISOString().split("T")[0],
-      destinations: [
-        {
-          orderId: "",
-          customerName: "",
-          customerPhone: "",
-          dropoffLocation: "",
-          coordinates: null,
-          distanceKm: null,
+    defaultValues: isEdit
+      ? {
+          warehouse: initialDelivery.warehouse ?? "Pantang West",
+          assignedRiderId: initialDelivery.assignedRiderId ?? undefined,
+          priority: initialDelivery.priority ?? "Normal",
+          deliveryDate: initialDelivery.deliveryDate ?? new Date().toISOString().split("T")[0],
+          notes: initialDelivery.notes ?? "",
+          destinations: [
+            {
+              orderId: initialDelivery.orderId ?? "",
+              customerName: initialDelivery.customerName ?? "",
+              customerPhone: initialDelivery.customerPhone ?? "",
+              dropoffLocation: initialDelivery.dropoffLocation ?? "",
+              coordinates: initialDelivery.dropoffCoordinates
+                ? { lat: initialDelivery.dropoffCoordinates.lat, lng: initialDelivery.dropoffCoordinates.lng }
+                : null,
+              distanceKm: initialDelivery.distance ?? null,
+            },
+          ],
+        }
+      : {
+          warehouse: "Pantang West",
+          priority: "Normal",
+          deliveryDate: new Date().toISOString().split("T")[0],
+          destinations: [
+            {
+              orderId: "",
+              customerName: "",
+              customerPhone: "",
+              dropoffLocation: "",
+              coordinates: null,
+              distanceKm: null,
+            },
+          ],
         },
-      ],
-    },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -80,20 +110,12 @@ export function DeliveryForm({ riders }: Props) {
 
   const warehouse = watch("warehouse");
 
-  const WAREHOUSE_COORDS: Record<string, { lat: number; lng: number }> = {
-    "Pantang West": { lat: 5.7122928, lng: -0.1894738 },
-    Amrahia: { lat: 5.7641229, lng: -0.1398611 },
-  };
-
   async function calculateDistance(index: number) {
     const dest = watch(`destinations.${index}`);
     const coords = dest?.coordinates as { lat: number; lng: number } | null | undefined;
-    if (!coords) {
-      toast.error("Set the dropoff location first");
-      return;
-    }
+    if (!coords) return;
 
-    const origin = WAREHOUSE_COORDS[warehouse];
+    const origin = WAREHOUSE_COORDS[warehouse] ?? WAREHOUSE_COORDS["Pantang West"];
     setCalculatingDist(index);
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${coords.lng},${coords.lat}?overview=false`;
@@ -101,17 +123,14 @@ export function DeliveryForm({ riders }: Props) {
       const timeout = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeout);
-      if (!res.ok) throw new Error("Distance service unavailable");
+      if (!res.ok) return;
       const data = await res.json();
       if (data.routes?.[0]) {
         const km = Math.round((data.routes[0].distance / 1000) * 10) / 10;
         setValue(`destinations.${index}.distanceKm`, km);
-        toast.success(`Distance: ${km} km`);
-      } else {
-        toast.error("Could not calculate distance for this route");
       }
     } catch {
-      toast.error("Failed to calculate distance");
+      // silently ignore — distance is optional
     } finally {
       setCalculatingDist(null);
     }
@@ -119,13 +138,15 @@ export function DeliveryForm({ riders }: Props) {
 
   function onSubmit(data: FormData) {
     startTransition(async () => {
-      const result = await createDeliveryAction(data);
+      const result = isEdit
+        ? await updateDeliveryAction(deliveryId, data)
+        : await createDeliveryAction(data);
+
       if ("error" in result) {
         toast.error(result.error);
       } else {
-        toast.success("Delivery created successfully");
-        router.refresh();
-        router.push("/dashboard");
+        toast.success(isEdit ? "Delivery updated" : "Delivery created");
+        router.push(isEdit ? `/deliveries/${deliveryId}` : "/dashboard");
       }
     });
   }
@@ -141,7 +162,7 @@ export function DeliveryForm({ riders }: Props) {
           <div className="space-y-1.5">
             <Label>Warehouse</Label>
             <Select
-              defaultValue="Pantang West"
+              defaultValue={isEdit ? initialDelivery.warehouse : "Pantang West"}
               onValueChange={(v) => setValue("warehouse", v as FormData["warehouse"])}
             >
               <SelectTrigger>
@@ -160,7 +181,7 @@ export function DeliveryForm({ riders }: Props) {
           <div className="space-y-1.5">
             <Label>Assign Rider</Label>
             <Select
-              items={riders.map((r) => ({ value: r.id, label: `${r.name} · ${r.riderId}` }))}
+              defaultValue={isEdit ? (initialDelivery.assignedRiderId ?? undefined) : undefined}
               onValueChange={(v) => setValue("assignedRiderId", v as string)}
             >
               <SelectTrigger>
@@ -179,7 +200,7 @@ export function DeliveryForm({ riders }: Props) {
           <div className="space-y-1.5">
             <Label>Priority</Label>
             <Select
-              defaultValue="Normal"
+              defaultValue={isEdit ? initialDelivery.priority : "Normal"}
               onValueChange={(v) => setValue("priority", v as FormData["priority"])}
             >
               <SelectTrigger>
@@ -226,7 +247,7 @@ export function DeliveryForm({ riders }: Props) {
               ({fields.length}/10)
             </span>
           </h2>
-          {fields.length < 10 && (
+          {fields.length < 10 && !isEdit && (
             <Button
               type="button"
               variant="outline"
@@ -312,42 +333,38 @@ export function DeliveryForm({ riders }: Props) {
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Dropoff Location</Label>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <LocationAutocomplete
-                      value={watch(`destinations.${index}.dropoffLocation`) ?? ""}
-                      onChange={(val, coords) => {
-                        setValue(`destinations.${index}.dropoffLocation`, val);
-                        if (coords) {
-                          setValue(`destinations.${index}.coordinates`, {
-                            lat: coords.lat,
-                            lng: coords.lon,
-                          });
-                        }
-                      }}
-                      placeholder="Search location in Ghana…"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 h-10 px-3"
-                    onClick={() => calculateDistance(index)}
-                    disabled={calculatingDist === index}
-                    title="Calculate distance"
-                  >
-                    {calculatingDist === index ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Navigation className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <LocationAutocomplete
+                  value={watch(`destinations.${index}.dropoffLocation`) ?? ""}
+                  onChange={(val, coords) => {
+                    setValue(`destinations.${index}.dropoffLocation`, val);
+                    if (coords) {
+                      setValue(`destinations.${index}.coordinates`, {
+                        lat: coords.lat,
+                        lng: coords.lon,
+                      });
+                      // Auto-calculate distance when location is selected
+                      setTimeout(() => calculateDistance(index), 0);
+                    } else {
+                      setValue(`destinations.${index}.coordinates`, null);
+                    }
+                  }}
+                  placeholder="Search location in Ghana…"
+                />
                 {watch(`destinations.${index}.distanceKm`) != null && (
                   <p className="text-xs text-gray-400 flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {watch(`destinations.${index}.distanceKm`) ?? ""} km from {warehouse}
+                    {calculatingDist === index ? (
+                      <span className="flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Calculating…
+                      </span>
+                    ) : (
+                      `${watch(`destinations.${index}.distanceKm`)} km from ${warehouse}`
+                    )}
+                  </p>
+                )}
+                {calculatingDist === index && watch(`destinations.${index}.distanceKm`) == null && (
+                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Calculating distance…
                   </p>
                 )}
               </div>
@@ -374,10 +391,10 @@ export function DeliveryForm({ riders }: Props) {
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating…
+              {isEdit ? "Saving…" : "Creating…"}
             </>
           ) : (
-            "Create Delivery"
+            isEdit ? "Save Changes" : "Create Delivery"
           )}
         </Button>
       </div>

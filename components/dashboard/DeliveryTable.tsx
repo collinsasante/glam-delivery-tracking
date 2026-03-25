@@ -105,7 +105,7 @@ export function DeliveryTable({ deliveries }: Props) {
               <TableRow
                 key={d.id}
                 className="group hover:bg-gray-50/60 cursor-pointer border-b border-gray-50 last:border-0"
-                onClick={() => router.push(`/deliveries/${d.id}/edit`)}
+                onClick={() => router.push(`/deliveries/${d.id}`)}
               >
                 <TableCell className="pl-4">
                   <span className="font-mono text-[11px] text-gray-400">

@@ -53,13 +53,9 @@ export function AdminExpenseForm({ riders }: Props) {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function onSubmit(data: any) {
+  function onSubmit(data: FormData) {
     startTransition(async () => {
-      const result = await adminCreateExpenseAction({
-        ...data,
-        amount: parseFloat(data.amount),
-      });
+      const result = await adminCreateExpenseAction(data);
       if ("error" in result) {
         toast.error(result.error);
       } else {
@@ -122,7 +118,7 @@ export function AdminExpenseForm({ riders }: Props) {
                 type="number"
                 step="0.01"
                 min="0"
-                {...register("amount")}
+                {...register("amount", { valueAsNumber: true })}
                 placeholder="0.00"
                 className={errors.amount ? "border-red-400" : ""}
               />

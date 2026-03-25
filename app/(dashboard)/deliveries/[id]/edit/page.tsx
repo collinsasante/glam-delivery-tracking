@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { getDeliveryById } from "@/services/deliveries";
 import { getActiveRiders } from "@/services/riders";
@@ -22,21 +22,22 @@ export default async function EditDeliveryPage({ params }: Props) {
   ]);
 
   if (!delivery) notFound();
+  if (delivery.status === "Completed") redirect(`/deliveries/${id}`);
 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
         <Link
-          href="/dashboard"
+          href={`/deliveries/${id}`}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-3"
         >
           <ChevronLeft className="h-4 w-4" />
-          Back to dashboard
+          Back to delivery
         </Link>
         <h1 className="text-xl font-semibold text-gray-900">Edit Delivery</h1>
         <p className="text-sm text-gray-500 mt-0.5 font-mono">{delivery.deliveryId}</p>
       </div>
-      <DeliveryForm riders={riders} />
+      <DeliveryForm riders={riders} deliveryId={id} initialDelivery={delivery} />
     </div>
   );
 }
