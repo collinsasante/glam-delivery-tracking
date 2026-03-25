@@ -180,21 +180,31 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
 
           <div className="space-y-1.5">
             <Label>Assign Rider</Label>
-            <Select
-              value={watch("assignedRiderId") ?? ""}
-              onValueChange={(v) => setValue("assignedRiderId", v as string)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select rider…" />
-              </SelectTrigger>
-              <SelectContent>
-                {riders.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    {r.name} · {r.riderId}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {(() => {
+              const selectedRiderId = watch("assignedRiderId");
+              const selectedRider = riders.find((r) => r.id === selectedRiderId);
+              return (
+                <Select
+                  value={selectedRiderId ?? ""}
+                  onValueChange={(v) => setValue("assignedRiderId", v as string)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select rider…">
+                      {selectedRider
+                        ? `${selectedRider.name} · ${selectedRider.riderId}`
+                        : undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {riders.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name} · {r.riderId}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
           </div>
 
           <div className="space-y-1.5">

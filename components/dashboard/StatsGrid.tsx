@@ -48,7 +48,7 @@ export function StatsGrid({ deliveries }: Props) {
       icon: MapPin,
       iconBg: "bg-red-50",
       iconColor: "text-red-600",
-      href: null,
+      href: "/deliveries?status=Completed&date=today",
     },
   ];
 

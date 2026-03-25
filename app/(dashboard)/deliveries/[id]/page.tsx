@@ -128,11 +128,29 @@ export default async function DeliveryDetailPage({ params }: Props) {
                 </a>
               </div>
             )}
+            {(completedStop ?? activeStop)?.fromLocation && (
+              <div className="flex items-start gap-2 text-sm">
+                <div className="w-4 h-4 shrink-0 mt-0.5 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400">Picked up from</p>
+                  <span className="text-gray-600 leading-snug">
+                    {(completedStop ?? activeStop)!.fromLocation}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="flex items-start gap-2 text-sm">
-              <MapPin className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
-              <span className="text-gray-600 leading-snug">
-                {delivery.dropoffLocation}
-              </span>
+              <div className="w-4 h-4 shrink-0 mt-0.5 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400">Delivered to</p>
+                <span className="text-gray-600 leading-snug">
+                  {delivery.dropoffLocation}
+                </span>
+              </div>
             </div>
           </div>
         </div>
