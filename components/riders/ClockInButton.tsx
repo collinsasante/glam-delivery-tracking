@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Clock, LogIn, LogOut } from "lucide-react";
+import { Clock, LogIn, LogOut, Loader2 } from "lucide-react";
 import { clockInAction, clockOutAction } from "@/actions/clockEvents";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -129,7 +129,9 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
               : "bg-green-600 hover:bg-green-700 text-white"
           )}
         >
-          {isClockedIn ? (
+          {isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : isClockedIn ? (
             <>
               <LogOut className="h-3.5 w-3.5" />
               Clock out

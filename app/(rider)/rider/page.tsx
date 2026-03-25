@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { getDeliveriesForRider } from "@/services/deliveries";
 import { getStopsForDeliveries } from "@/services/stops";
 import {
-  isClockedIn,
   getLastClockEvent,
   getTodayClockEvents,
   autoClockOutIfNeeded,
@@ -26,12 +25,12 @@ export default async function RiderPage() {
   // Auto clock-out if rider forgot to clock out yesterday
   await autoClockOutIfNeeded(riderId);
 
-  const [deliveries, clockedIn, lastEvent, todayEvents] = await Promise.all([
+  const [deliveries, lastEvent, todayEvents] = await Promise.all([
     getDeliveriesForRider(riderId),
-    isClockedIn(riderId),
     getLastClockEvent(riderId),
     getTodayClockEvents(riderId),
   ]);
+  const clockedIn = lastEvent?.eventType === "Clock In";
 
   const pending = deliveries.filter((d) => d.status === "Pending");
   const active = deliveries.filter((d) => d.status === "In Progress");

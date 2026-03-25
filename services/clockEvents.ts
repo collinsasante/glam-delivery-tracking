@@ -40,13 +40,12 @@ export async function getTodayClockEvents(riderId: string): Promise<ClockEvent[]
 export async function getLastClockEvent(
   riderId: string
 ): Promise<ClockEvent | null> {
-  // Fetch recent events without a date filter — most reliable way to get current state
   const records = await airtableList<ClockEventFields>("Clock Events", {
+    filterByFormula: `FIND("${escapeAirtableValue(riderId)}", ARRAYJOIN({Rider}))`,
     sort: [{ field: "Timestamp", direction: "desc" as const }],
-    maxRecords: "200",
+    maxRecords: "1",
   });
-  const riderEvents = records.filter((r) => r.fields["Rider"]?.[0] === riderId);
-  return riderEvents.length ? mapToClockEvent(riderEvents[0]) : null;
+  return records.length ? mapToClockEvent(records[0]) : null;
 }
 
 export async function isClockedIn(riderId: string): Promise<boolean> {
@@ -63,7 +62,8 @@ export async function autoClockOutIfNeeded(riderId: string): Promise<void> {
   if (!last || last.eventType !== "Clock In") return;
 
   const today = new Date().toISOString().split("T")[0];
-  if (last.date === today) return; // clocked in today — nothing to do
+  const lastDate = (last.timestamp || last.date).slice(0, 10);
+  if (lastDate === today) return; // clocked in today — nothing to do
 
   // Last clock-in was a previous day — auto clock out now
   const clockInTime = new Date(last.timestamp);

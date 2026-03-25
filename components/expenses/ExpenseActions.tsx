@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, CheckCircle, XCircle, DollarSign, Trash2 } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, DollarSign, Trash2, Loader2 } from "lucide-react";
 import { updateExpenseStatusAction, deleteExpenseAction } from "@/actions/expenses";
 import { toast } from "sonner";
 import type { Expense } from "@/types/expense";
@@ -44,7 +44,11 @@ export function ExpenseActions({ expense }: Props) {
         className="inline-flex items-center justify-center h-8 w-8 rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-50"
         disabled={isPending}
       >
-        <MoreHorizontal className="h-4 w-4" />
+        {isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <MoreHorizontal className="h-4 w-4" />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {expense.status === "Pending" && (
