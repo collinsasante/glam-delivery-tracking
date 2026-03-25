@@ -29,6 +29,12 @@ export default async function SignInPage() {
         <p className="text-sm text-gray-500 text-center mt-1">Welcome back — enter your credentials below</p>
       </div>
       <SignInForm />
+      <p className="mt-5 text-center text-xs text-gray-400">
+        Track deliveries in real-time →{" "}
+        <a href="/board" className="text-red-800 hover:underline font-medium">
+          Live Board
+        </a>
+      </p>
     </div>
   );
 }
