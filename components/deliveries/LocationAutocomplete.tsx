@@ -7,8 +7,9 @@ import { MapPin, Loader2 } from "lucide-react";
 interface Suggestion {
   description: string;
   mainText: string;
-  lat: number;
-  lon: number;
+  lat: number | null;
+  lon: number | null;
+  placeId?: string;
 }
 
 interface Props {
@@ -25,8 +26,14 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Prevent re-search immediately after a suggestion is selected
+  const justSelectedRef = useRef(false);
 
   const search = useCallback(async (q: string) => {
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
     if (q.length < 3) { setSuggestions([]); setOpen(false); return; }
     setLoading(true);
     try {
@@ -48,11 +55,36 @@ export function LocationAutocomplete({ value, onChange, placeholder, id }: Props
     return () => clearTimeout(debounceRef.current);
   }, [query, search]);
 
-  function selectSuggestion(s: Suggestion) {
+  async function selectSuggestion(s: Suggestion) {
+    justSelectedRef.current = true;
+    clearTimeout(debounceRef.current);
     setQuery(s.description);
+    setSuggestions([]);
     setOpen(false);
     setActiveIndex(-1);
-    onChange(s.description, { lat: s.lat, lon: s.lon });
+
+    // If coords are already available (Photon), use them directly
+    if (s.lat != null && s.lon != null) {
+      onChange(s.description, { lat: s.lat, lon: s.lon });
+      return;
+    }
+
+    // Google Maps result — fetch coordinates via place_id
+    if (s.placeId) {
+      try {
+        const res = await fetch(`/api/places/coords?place_id=${encodeURIComponent(s.placeId)}`);
+        const data = await res.json();
+        if (data.lat != null && data.lon != null) {
+          onChange(s.description, { lat: data.lat, lon: data.lon });
+          return;
+        }
+      } catch {
+        // fall through
+      }
+    }
+
+    // No coords available — still call onChange without coords
+    onChange(s.description, undefined);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

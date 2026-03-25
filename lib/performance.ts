@@ -39,9 +39,22 @@ const MAX_DISTANCE: Record<"daily" | "weekly" | "monthly", number> = {
 
 export function calculatePerformanceScore(
   stops: StopMetric[],
-  period: "daily" | "weekly" | "monthly" = "daily"
+  period: "daily" | "weekly" | "monthly" = "daily",
+  deliveryCount = 0
 ): PerformanceScore {
   const total = stops.length;
+
+  // No stops but there are completed deliveries — show delivery-based score
+  if (total === 0 && deliveryCount > 0) {
+    return {
+      overallScore: 40,
+      rating: "Average",
+      metrics: { speedEfficiency: 0, completionRate: 100, distanceScore: 0, consistency: 100 },
+      totalDeliveries: deliveryCount,
+      completedDeliveries: deliveryCount,
+      totalDistanceKm: 0,
+    };
+  }
 
   if (total === 0) return zeroScore();
 

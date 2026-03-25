@@ -181,7 +181,7 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
           <div className="space-y-1.5">
             <Label>Assign Rider</Label>
             <Select
-              defaultValue={isEdit ? (initialDelivery.assignedRiderId ?? undefined) : undefined}
+              value={watch("assignedRiderId") ?? ""}
               onValueChange={(v) => setValue("assignedRiderId", v as string)}
             >
               <SelectTrigger>

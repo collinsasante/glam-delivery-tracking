@@ -52,7 +52,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         const allStops = (
           await Promise.all(riderDeliveries.map((d) => getStopsForDelivery(d.id)))
         ).flat();
-        const score = calculatePerformanceScore(allStops, period);
+        const score = calculatePerformanceScore(allStops, period, riderDeliveries.length);
         return { rider, score };
       })
   );

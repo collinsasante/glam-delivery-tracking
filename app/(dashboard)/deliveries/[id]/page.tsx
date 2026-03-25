@@ -53,6 +53,7 @@ export default async function DeliveryDetailPage({ params }: Props) {
   ]);
 
   const completedStop = stops.find((s) => s.status === "Completed");
+  const activeStop = stops.find((s) => s.status === "In Progress") ?? stops[0];
   const priority = priorityConfig[delivery.priority] ?? priorityConfig.Normal;
   const isCompleted = delivery.status === "Completed";
 
@@ -236,6 +237,36 @@ export default async function DeliveryDetailPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* Route: pickup → dropoff */}
+      {(completedStop ?? activeStop) && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            Route
+          </p>
+          <div className="space-y-3">
+            {(completedStop ?? activeStop)!.fromLocation && (
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-0.5">Picked up from</p>
+                  <p className="text-sm text-gray-700">
+                    {(completedStop ?? activeStop)!.fromLocation}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="ml-1 w-px h-4 bg-gray-200" />
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+              <div>
+                <p className="text-[10px] text-gray-400 mb-0.5">Delivered to</p>
+                <p className="text-sm text-gray-700">{delivery.dropoffLocation}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       {delivery.notes && (

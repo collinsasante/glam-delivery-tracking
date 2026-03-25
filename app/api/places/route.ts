@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   if (!input || input.length < 2) return Response.json({ predictions: [] });
 
-  // Try Google Maps Places Autocomplete (requires billing enabled)
+  // Google Maps Places Autocomplete (server-side — no CORS issue)
   if (GOOGLE_API_KEY) {
     try {
       const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_API_KEY}&components=country:gh&language=en&types=geocode|establishment`;
@@ -19,25 +19,24 @@ export async function GET(req: NextRequest) {
         const data = await res.json();
         if (data.status === "OK" || data.status === "ZERO_RESULTS") {
           const predictions = (data.predictions ?? []).map(
-            (p: { description: string; structured_formatting?: { main_text?: string } }) => ({
+            (p: { description: string; place_id: string; structured_formatting?: { main_text?: string } }) => ({
               description: p.description,
               mainText: p.structured_formatting?.main_text ?? p.description,
-              // coordinates will be null — fetched on selection if needed
+              placeId: p.place_id,
               lat: null,
               lon: null,
             })
           );
           return Response.json({ predictions, source: "google" });
         }
-        // If billing not enabled (REQUEST_DENIED), fall through to Photon
-        console.warn("[places] Google returned:", data.status, "— falling back to Photon");
+        console.warn("[places] Google status:", data.status, "— falling back to Photon");
       }
     } catch (err) {
-      console.warn("[places] Google request failed, falling back to Photon:", err);
+      console.warn("[places] Google request failed:", err);
     }
   }
 
-  // Fallback: Photon (OpenStreetMap-based, free)
+  // Fallback: Photon (free, no billing, returns coordinates directly)
   const GHANA_BBOX = "-3.26,4.74,1.2,11.17";
   const res = await fetch(
     `https://photon.komoot.io/api/?q=${encodeURIComponent(input)}&limit=8&lang=en&bbox=${GHANA_BBOX}`,
@@ -54,6 +53,7 @@ export async function GET(req: NextRequest) {
         mainText: p.name ?? parts[0] ?? input,
         lat: f.geometry.coordinates[1],
         lon: f.geometry.coordinates[0],
+        placeId: undefined,
       };
     }
   );
