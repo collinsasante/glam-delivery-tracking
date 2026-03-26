@@ -5,14 +5,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, CheckCircle, XCircle, DollarSign, Trash2, Loader2 } from "lucide-react";
-import { updateExpenseStatusAction, deleteExpenseAction } from "@/actions/expenses";
+import { MoreHorizontal, Trash2, Loader2 } from "lucide-react";
+import { deleteExpenseAction } from "@/actions/expenses";
 import { toast } from "sonner";
 import type { Expense } from "@/types/expense";
-
 
 interface Props {
   expense: Expense;
@@ -20,14 +18,6 @@ interface Props {
 
 export function ExpenseActions({ expense }: Props) {
   const [isPending, startTransition] = useTransition();
-
-  function handleStatus(status: Expense["status"]) {
-    startTransition(async () => {
-      const result = await updateExpenseStatusAction(expense.id, status);
-      if ("error" in result) toast.error(result.error);
-      else toast.success(`Expense marked as ${status}`);
-    });
-  }
 
   function handleDelete() {
     if (!confirm("Delete this expense? This cannot be undone.")) return;
@@ -50,35 +40,7 @@ export function ExpenseActions({ expense }: Props) {
           <MoreHorizontal className="h-4 w-4" />
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        {expense.status === "Pending" && (
-          <>
-            <DropdownMenuItem
-              className="text-red-800 focus:text-red-700"
-              onClick={() => handleStatus("Approved")}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Approve
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600 focus:text-red-700"
-              onClick={() => handleStatus("Rejected")}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Reject
-            </DropdownMenuItem>
-          </>
-        )}
-        {expense.status === "Approved" && (
-          <DropdownMenuItem
-            className="text-red-800"
-            onClick={() => handleStatus("Paid")}
-          >
-            <DollarSign className="h-4 w-4 mr-2" />
-            Mark as Paid
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end" className="w-36">
         <DropdownMenuItem
           className="text-red-600 focus:text-red-700"
           onClick={handleDelete}

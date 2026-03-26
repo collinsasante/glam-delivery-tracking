@@ -28,31 +28,17 @@ export function ImageUpload({ value, onChange, disabled }: Props) {
     setError(null);
     setUploading(true);
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-      setError("Image upload not configured");
-      setUploading(false);
-      return;
-    }
-
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-      formData.append("folder", "glam-delivery/receipts");
 
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        { method: "POST", body: formData }
-      );
-
-      if (!res.ok) throw new Error("Upload failed");
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
-      onChange(data.secure_url);
-    } catch {
-      setError("Upload failed. Please try again.");
+
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      onChange(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }

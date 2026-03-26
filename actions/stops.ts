@@ -41,9 +41,7 @@ export async function startDeliveryAction(
     // If no stop exists yet, auto-create one
     let resolvedStopId = stopId;
     if (!resolvedStopId) {
-      const fromLocation = riderGps
-        ? `${riderGps.lat.toFixed(5)},${riderGps.lng.toFixed(5)}`
-        : (delivery.warehouse ?? "Warehouse");
+      const fromLocation = delivery.warehouse ?? "Warehouse";
       const stop = await createStop({
         deliveryRecordId: deliveryId,
         stopNumber: 1,

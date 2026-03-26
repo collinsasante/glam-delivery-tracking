@@ -75,7 +75,7 @@ export async function createExpense(data: {
     "Expense Type": data.expenseType,
     Amount: data.amount,
     Date: data.date,
-    Status: "Pending",
+    Status: "Paid",
     "Submitted At": new Date().toISOString(),
   };
   if (data.description) fields["Description"] = data.description;

@@ -45,7 +45,7 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
   const rider = await getRiderById(riderId);
   if (!rider) notFound();
 
-  const deliveries = await getDeliveries({ riderId, date: dateFilter, status: "Completed" });
+  const deliveries = await getDeliveries({ riderId, status: "Completed" });
   const allStops = (await Promise.all(deliveries.map((d) => getStopsForDelivery(d.id)))).flat();
   const score = calculatePerformanceScore(allStops, period);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, MapPin } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import type { Rider } from "@/types/rider";
 import type { Delivery } from "@/types/delivery";
 
@@ -45,15 +45,10 @@ const PRIORITIES = [
   { value: "Express", label: "Express" },
 ];
 
-const WAREHOUSE_COORDS: Record<string, { lat: number; lng: number }> = {
-  "Pantang West": { lat: 5.7122928, lng: -0.1894738 },
-  Amrahia: { lat: 5.7641229, lng: -0.1398611 },
-};
 
 export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [calculatingDist, setCalculatingDist] = useState<number | null>(null);
 
   const isEdit = !!deliveryId && !!initialDelivery;
 
@@ -108,34 +103,6 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
     name: "destinations",
   });
 
-  const warehouse = watch("warehouse");
-
-  async function calculateDistance(index: number) {
-    const dest = watch(`destinations.${index}`);
-    const coords = dest?.coordinates as { lat: number; lng: number } | null | undefined;
-    if (!coords) return;
-
-    const origin = WAREHOUSE_COORDS[warehouse] ?? WAREHOUSE_COORDS["Pantang West"];
-    setCalculatingDist(index);
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${coords.lng},${coords.lat}?overview=false`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.routes?.[0]) {
-        const km = Math.round((data.routes[0].distance / 1000) * 10) / 10;
-        setValue(`destinations.${index}.distanceKm`, km);
-      }
-    } catch {
-      // silently ignore — distance is optional
-    } finally {
-      setCalculatingDist(null);
-    }
-  }
-
   function onSubmit(data: FormData) {
     startTransition(async () => {
       const result = isEdit
@@ -189,11 +156,15 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
                   onValueChange={(v) => setValue("assignedRiderId", v as string)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select rider…">
-                      {selectedRider
-                        ? `${selectedRider.name} · ${selectedRider.riderId}`
-                        : undefined}
-                    </SelectValue>
+                    {selectedRider ? (
+                      <span className="flex-1 text-left truncate">
+                        {selectedRider.name} · {selectedRider.riderId}
+                      </span>
+                    ) : (
+                      <span className="flex-1 text-left text-muted-foreground">
+                        Select rider…
+                      </span>
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     {riders.map((r) => (
@@ -352,31 +323,12 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
                         lat: coords.lat,
                         lng: coords.lon,
                       });
-                      // Auto-calculate distance when location is selected
-                      setTimeout(() => calculateDistance(index), 0);
                     } else {
                       setValue(`destinations.${index}.coordinates`, null);
                     }
                   }}
                   placeholder="Search location in Ghana…"
                 />
-                {watch(`destinations.${index}.distanceKm`) != null && (
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {calculatingDist === index ? (
-                      <span className="flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Calculating…
-                      </span>
-                    ) : (
-                      `${watch(`destinations.${index}.distanceKm`)} km from ${warehouse}`
-                    )}
-                  </p>
-                )}
-                {calculatingDist === index && watch(`destinations.${index}.distanceKm`) == null && (
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Calculating distance…
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>
