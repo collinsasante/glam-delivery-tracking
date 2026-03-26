@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { TrendingUp, Users } from "lucide-react";
 
 export const metadata: Metadata = { title: "Performance" };
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -37,9 +37,10 @@ const periodLabels: Record<Period, string> = {
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
   const period = (params.period ?? "daily") as Period;
+  const dateFilter = period === "daily" ? "today" : period === "weekly" ? "week" : "month";
   const [riders, deliveries] = await Promise.all([
     getRiders(),
-    getDeliveries({ status: "Completed" }),
+    getDeliveries({ status: "Completed", date: dateFilter }),
   ]);
 
   const riderScores = await Promise.all(

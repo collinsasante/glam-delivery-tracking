@@ -40,14 +40,14 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
   const { riderId } = await params;
   const sp = await searchParams;
   const period = (sp.period ?? "daily") as Period;
-  const dateFilter = period === "daily" ? "today" : period === "weekly" ? "week" : "month";
+  const dateFilter: "today" | "week" | "month" = period === "daily" ? "today" : period === "weekly" ? "week" : "month";
 
   const rider = await getRiderById(riderId);
   if (!rider) notFound();
 
-  const deliveries = await getDeliveries({ riderId, status: "Completed" });
+  const deliveries = await getDeliveries({ riderId, status: "Completed", date: dateFilter });
   const allStops = (await Promise.all(deliveries.map((d) => getStopsForDelivery(d.id)))).flat();
-  const score = calculatePerformanceScore(allStops, period);
+  const score = calculatePerformanceScore(allStops, period, deliveries.length);
 
   return (
     <div className="max-w-2xl space-y-6">

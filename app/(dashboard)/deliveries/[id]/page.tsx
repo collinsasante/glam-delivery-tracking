@@ -219,19 +219,45 @@ export default async function DeliveryDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* GPS delivery location */}
-        {completedStop?.riderGps && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-              Delivery GPS
-            </p>
-            <div className="space-y-2">
-              <div className="flex items-start gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+      </div>
+
+      {/* Route: start → actual drop point */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          Route
+        </p>
+        <div className="space-y-3">
+          {/* Pickup */}
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+            <div>
+              <p className="text-[10px] text-gray-400 mb-0.5">Pickup</p>
+              <p className="text-sm text-gray-700">
+                {displayStop?.fromLocation || delivery.warehouse || "—"}
+              </p>
+            </div>
+          </div>
+          <div className="ml-1 w-px h-4 bg-gray-200" />
+          {/* Intended destination */}
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+            <div>
+              <p className="text-[10px] text-gray-400 mb-0.5">Intended destination</p>
+              <p className="text-sm text-gray-700">
+                {displayStop?.toLocation || delivery.dropoffLocation || "—"}
+              </p>
+            </div>
+          </div>
+          {/* Actual drop point — only when rider has GPS */}
+          {completedStop?.riderGps && (
+            <>
+              <div className="ml-1 w-px h-4 bg-gray-200" />
+              <div className="flex items-start gap-3">
+                <MapPin className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-gray-600 font-mono text-xs">
-                    {completedStop.riderGps.lat.toFixed(6)},{" "}
-                    {completedStop.riderGps.lng.toFixed(6)}
+                  <p className="text-[10px] text-gray-400 mb-0.5">Actual drop point</p>
+                  <p className="font-mono text-xs text-gray-600">
+                    {completedStop.riderGps.lat.toFixed(6)}, {completedStop.riderGps.lng.toFixed(6)}
                   </p>
                   <a
                     href={`https://maps.google.com/?q=${completedStop.riderGps.lat},${completedStop.riderGps.lng}`}
@@ -243,49 +269,23 @@ export default async function DeliveryDetailPage({ params }: Props) {
                   </a>
                 </div>
               </div>
-              {completedStop.durationMins && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-gray-400 shrink-0" />
-                  <span className="text-gray-500">Duration:</span>
-                  <span className="text-gray-700">
-                    {completedStop.durationMins} min
-                  </span>
+            </>
+          )}
+          {/* Footer: distance + duration */}
+          {(distanceKm != null || completedStop?.durationMins) && (
+            <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+              {distanceKm != null && (
+                <div className="flex items-center gap-1.5">
+                  <Navigation className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-500">{distanceKm} km</span>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Route: start → end */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-          Route
-        </p>
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
-            <div>
-              <p className="text-[10px] text-gray-400 mb-0.5">Pickup</p>
-              <p className="text-sm text-gray-700">
-                {displayStop?.fromLocation || delivery.warehouse || "—"}
-              </p>
-            </div>
-          </div>
-          <div className="ml-1 w-px h-4 bg-gray-200" />
-          <div className="flex items-start gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
-            <div>
-              <p className="text-[10px] text-gray-400 mb-0.5">Delivery</p>
-              <p className="text-sm text-gray-700">
-                {displayStop?.toLocation || delivery.dropoffLocation || "—"}
-              </p>
-            </div>
-          </div>
-          {distanceKm != null && (
-            <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-              <Navigation className="h-3.5 w-3.5 text-gray-400" />
-              <span className="text-xs text-gray-500">{distanceKm} km</span>
+              {completedStop?.durationMins && (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-500">{completedStop.durationMins} min</span>
+                </div>
+              )}
             </div>
           )}
         </div>
