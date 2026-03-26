@@ -128,27 +128,25 @@ export default async function DeliveryDetailPage({ params }: Props) {
                 </a>
               </div>
             )}
-            {(completedStop ?? activeStop)?.fromLocation && (
-              <div className="flex items-start gap-2 text-sm">
-                <div className="w-4 h-4 shrink-0 mt-0.5 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400">Picked up from</p>
-                  <span className="text-gray-600 leading-snug">
-                    {(completedStop ?? activeStop)!.fromLocation}
-                  </span>
-                </div>
+            <div className="flex items-start gap-2 text-sm">
+              <div className="w-4 h-4 shrink-0 mt-0.5 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-red-400" />
               </div>
-            )}
+              <div>
+                <p className="text-[10px] text-gray-400">Start location</p>
+                <span className="text-gray-600 leading-snug">
+                  {(completedStop ?? activeStop)?.fromLocation || delivery.warehouse || "—"}
+                </span>
+              </div>
+            </div>
             <div className="flex items-start gap-2 text-sm">
               <div className="w-4 h-4 shrink-0 mt-0.5 flex items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">Delivered to</p>
+                <p className="text-[10px] text-gray-400">End location</p>
                 <span className="text-gray-600 leading-snug">
-                  {delivery.dropoffLocation}
+                  {(completedStop ?? activeStop)?.toLocation || delivery.dropoffLocation}
                 </span>
               </div>
             </div>
@@ -256,35 +254,33 @@ export default async function DeliveryDetailPage({ params }: Props) {
         )}
       </div>
 
-      {/* Route: pickup → dropoff */}
-      {(completedStop ?? activeStop) && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            Route
-          </p>
-          <div className="space-y-3">
-            {(completedStop ?? activeStop)!.fromLocation && (
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-gray-400 mb-0.5">Picked up from</p>
-                  <p className="text-sm text-gray-700">
-                    {(completedStop ?? activeStop)!.fromLocation}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="ml-1 w-px h-4 bg-gray-200" />
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
-              <div>
-                <p className="text-[10px] text-gray-400 mb-0.5">Delivered to</p>
-                <p className="text-sm text-gray-700">{delivery.dropoffLocation}</p>
-              </div>
+      {/* Route: start → end */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          Route
+        </p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+            <div>
+              <p className="text-[10px] text-gray-400 mb-0.5">Start</p>
+              <p className="text-sm text-gray-700">
+                {(completedStop ?? activeStop)?.fromLocation || delivery.warehouse || "—"}
+              </p>
+            </div>
+          </div>
+          <div className="ml-1 w-px h-4 bg-gray-200" />
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+            <div>
+              <p className="text-[10px] text-gray-400 mb-0.5">End</p>
+              <p className="text-sm text-gray-700">
+                {(completedStop ?? activeStop)?.toLocation || delivery.dropoffLocation}
+              </p>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Notes */}
       {delivery.notes && (
@@ -302,6 +298,20 @@ export default async function DeliveryDetailPage({ params }: Props) {
           Order ID: <span className="font-mono">{delivery.orderId}</span>
         </p>
       )}
+    </div>
+  );
+}
+  )}
+    </div>
+  );
+}
+assName="font-mono">{delivery.orderId}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+  )}
     </div>
   );
 }
