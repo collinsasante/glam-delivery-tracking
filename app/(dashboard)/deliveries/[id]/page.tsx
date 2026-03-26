@@ -57,6 +57,9 @@ export default async function DeliveryDetailPage({ params }: Props) {
   const priority = priorityConfig[delivery.priority] ?? priorityConfig.Normal;
   const isCompleted = delivery.status === "Completed";
 
+  const displayStop = completedStop ?? activeStop;
+  const distanceKm = displayStop?.distanceKm ?? delivery.distance;
+
   return (
     <div className="max-w-2xl space-y-6">
       {/* Back + header */}
@@ -133,9 +136,9 @@ export default async function DeliveryDetailPage({ params }: Props) {
                 <div className="w-2 h-2 rounded-full bg-red-400" />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">Start location</p>
+                <p className="text-[10px] text-gray-400">Pickup location</p>
                 <span className="text-gray-600 leading-snug">
-                  {(completedStop ?? activeStop)?.fromLocation || delivery.warehouse || "—"}
+                  {displayStop?.fromLocation || delivery.warehouse || "—"}
                 </span>
               </div>
             </div>
@@ -144,9 +147,9 @@ export default async function DeliveryDetailPage({ params }: Props) {
                 <div className="w-2 h-2 rounded-full bg-green-500" />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">End location</p>
+                <p className="text-[10px] text-gray-400">Delivery location</p>
                 <span className="text-gray-600 leading-snug">
-                  {(completedStop ?? activeStop)?.toLocation || delivery.dropoffLocation}
+                  {displayStop?.toLocation || delivery.dropoffLocation || "—"}
                 </span>
               </div>
             </div>
@@ -167,10 +170,10 @@ export default async function DeliveryDetailPage({ params }: Props) {
               <Package className="h-4 w-4 text-gray-400 shrink-0" />
               <span className="text-gray-600">{delivery.warehouse}</span>
             </div>
-            {delivery.distance != null && (
+            {distanceKm != null && (
               <div className="flex items-center gap-2 text-sm">
                 <Navigation className="h-4 w-4 text-gray-400 shrink-0" />
-                <span className="text-gray-600">{delivery.distance} km</span>
+                <span className="text-gray-600">{distanceKm} km</span>
               </div>
             )}
             {rider && (
@@ -263,9 +266,9 @@ export default async function DeliveryDetailPage({ params }: Props) {
           <div className="flex items-start gap-3">
             <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
             <div>
-              <p className="text-[10px] text-gray-400 mb-0.5">Start</p>
+              <p className="text-[10px] text-gray-400 mb-0.5">Pickup</p>
               <p className="text-sm text-gray-700">
-                {(completedStop ?? activeStop)?.fromLocation || delivery.warehouse || "—"}
+                {displayStop?.fromLocation || delivery.warehouse || "—"}
               </p>
             </div>
           </div>
@@ -273,12 +276,18 @@ export default async function DeliveryDetailPage({ params }: Props) {
           <div className="flex items-start gap-3">
             <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
             <div>
-              <p className="text-[10px] text-gray-400 mb-0.5">End</p>
+              <p className="text-[10px] text-gray-400 mb-0.5">Delivery</p>
               <p className="text-sm text-gray-700">
-                {(completedStop ?? activeStop)?.toLocation || delivery.dropoffLocation}
+                {displayStop?.toLocation || delivery.dropoffLocation || "—"}
               </p>
             </div>
           </div>
+          {distanceKm != null && (
+            <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+              <Navigation className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-xs text-gray-500">{distanceKm} km</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -298,20 +307,6 @@ export default async function DeliveryDetailPage({ params }: Props) {
           Order ID: <span className="font-mono">{delivery.orderId}</span>
         </p>
       )}
-    </div>
-  );
-}
-  )}
-    </div>
-  );
-}
-assName="font-mono">{delivery.orderId}</span>
-        </p>
-      )}
-    </div>
-  );
-}
-  )}
     </div>
   );
 }

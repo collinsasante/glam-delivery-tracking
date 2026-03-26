@@ -3,9 +3,10 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Mail, Phone, Truck, Calendar, Package } from "lucide-react";
+import { ChevronLeft, Mail, Phone, Truck, Calendar, Package, Clock } from "lucide-react";
 import { getRiderById } from "@/services/riders";
 import { getDeliveries } from "@/services/deliveries";
+import { getTodayClockEvents } from "@/services/clockEvents";
 
 export const metadata: Metadata = { title: "Rider Profile" };
 
@@ -18,7 +19,10 @@ export default async function RiderDetailPage({ params }: Props) {
   const rider = await getRiderById(id);
   if (!rider) notFound();
 
-  const deliveries = await getDeliveries({ riderId: id });
+  const [deliveries, todayClockEvents] = await Promise.all([
+    getDeliveries({ riderId: id }),
+    getTodayClockEvents(rider.id),
+  ]);
   const completed = deliveries.filter((d) => d.status === "Completed");
   const totalDistance = completed.reduce((sum, d) => sum + (d.distance ?? 0), 0);
   const completionRate =
@@ -130,6 +134,52 @@ export default async function RiderDetailPage({ params }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Today's clock events */}
+      {todayClockEvents.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">
+            Today&apos;s Attendance
+          </p>
+          <div className="space-y-2">
+            {todayClockEvents.map((event) => (
+              <div key={event.id} className="flex items-center gap-3">
+                <Clock
+                  className={`h-4 w-4 shrink-0 ${
+                    event.eventType === "Clock In"
+                      ? "text-green-500"
+                      : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`text-xs font-medium w-16 ${
+                    event.eventType === "Clock In"
+                      ? "text-green-700"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {event.eventType}
+                </span>
+                <span className="font-mono text-sm text-gray-700">
+                  {event.time
+                    ? (() => {
+                        const [h, m] = event.time.split(":").map(Number);
+                        const suffix = h >= 12 ? "PM" : "AM";
+                        const hour = h % 12 || 12;
+                        return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
+                      })()
+                    : "—"}
+                </span>
+                {event.durationMins != null && (
+                  <span className="text-xs text-gray-400 ml-auto">
+                    {event.durationMins} min shift
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent deliveries */}
       {deliveries.length > 0 && (
