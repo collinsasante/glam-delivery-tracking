@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { TrendingUp, Users } from "lucide-react";
 
 export const metadata: Metadata = { title: "Performance" };
-export const dynamic = "force-dynamic";
 
 type Period = "daily" | "weekly" | "monthly";
 
