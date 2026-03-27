@@ -148,9 +148,20 @@ export default async function DeliveryDetailPage({ params }: Props) {
               </div>
               <div>
                 <p className="text-[10px] text-gray-400">Delivery location</p>
-                <span className="text-gray-600 leading-snug">
-                  {displayStop?.toLocation || delivery.dropoffLocation || "—"}
-                </span>
+                {completedStop?.riderGps ? (
+                  <a
+                    href={`https://maps.google.com/?q=${completedStop.riderGps.lat},${completedStop.riderGps.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs text-red-800 hover:underline leading-snug"
+                  >
+                    {completedStop.riderGps.lat.toFixed(5)}, {completedStop.riderGps.lng.toFixed(5)}
+                  </a>
+                ) : (
+                  <span className="text-gray-600 leading-snug">
+                    {displayStop?.toLocation || delivery.dropoffLocation || "—"}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -238,24 +249,17 @@ export default async function DeliveryDetailPage({ params }: Props) {
             </div>
           </div>
           <div className="ml-1 w-px h-4 bg-gray-200" />
-          {/* Intended destination */}
+          {/* Delivered at — GPS if rider has marked delivered, otherwise planned destination */}
           <div className="flex items-start gap-3">
-            <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+            {completedStop?.riderGps ? (
+              <MapPin className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+            ) : (
+              <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+            )}
             <div>
-              <p className="text-[10px] text-gray-400 mb-0.5">Intended destination</p>
-              <p className="text-sm text-gray-700">
-                {displayStop?.toLocation || delivery.dropoffLocation || "—"}
-              </p>
-            </div>
-          </div>
-          {/* Actual drop point — only when rider has GPS */}
-          {completedStop?.riderGps && (
-            <>
-              <div className="ml-1 w-px h-4 bg-gray-200" />
-              <div className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-gray-400 mb-0.5">Actual drop point</p>
+              <p className="text-[10px] text-gray-400 mb-0.5">Delivered at</p>
+              {completedStop?.riderGps ? (
+                <>
                   <p className="font-mono text-xs text-gray-600">
                     {completedStop.riderGps.lat.toFixed(6)}, {completedStop.riderGps.lng.toFixed(6)}
                   </p>
@@ -267,10 +271,14 @@ export default async function DeliveryDetailPage({ params }: Props) {
                   >
                     View on Google Maps →
                   </a>
-                </div>
-              </div>
-            </>
-          )}
+                </>
+              ) : (
+                <p className="text-sm text-gray-700">
+                  {displayStop?.toLocation || delivery.dropoffLocation || "—"}
+                </p>
+              )}
+            </div>
+          </div>
           {/* Footer: distance + duration */}
           {(distanceKm != null || completedStop?.durationMins) && (
             <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
