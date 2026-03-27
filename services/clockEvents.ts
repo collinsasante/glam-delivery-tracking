@@ -40,12 +40,20 @@ export async function getTodayClockEvents(riderId: string): Promise<ClockEvent[]
 export async function getLastClockEvent(
   riderId: string
 ): Promise<ClockEvent | null> {
+  // ARRAYJOIN({Rider}) in Airtable formulas expands to display names, not record
+  // IDs — so FIND(riderId, ARRAYJOIN({Rider})) never matches. Fetch recent events
+  // and filter client-side by record ID instead.
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const cutoffDate = cutoff.toISOString().split("T")[0];
+
   const records = await airtableList<ClockEventFields>("Clock Events", {
-    filterByFormula: `FIND("${escapeAirtableValue(riderId)}", ARRAYJOIN({Rider}))`,
+    filterByFormula: `{Date} >= "${cutoffDate}"`,
     sort: [{ field: "Timestamp", direction: "desc" as const }],
-    maxRecords: "1",
   });
-  return records.length ? mapToClockEvent(records[0]) : null;
+
+  const match = records.find((r) => r.fields["Rider"]?.[0] === riderId);
+  return match ? mapToClockEvent(match) : null;
 }
 
 export async function isClockedIn(riderId: string): Promise<boolean> {
