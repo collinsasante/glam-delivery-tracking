@@ -19,6 +19,7 @@ interface RiderFields {
   Active?: boolean;
   "Joined Date"?: string;
   "Photo URL"?: string;
+  "FCM Token"?: string;
 }
 
 function mapToRider(record: { id: string; fields: RiderFields }): Rider {
@@ -34,6 +35,7 @@ function mapToRider(record: { id: string; fields: RiderFields }): Rider {
     active: f["Active"] ?? true,
     joinedDate: f["Joined Date"] ?? "",
     photoUrl: f["Photo URL"] ?? null,
+    fcmToken: f["FCM Token"] ?? null,
   };
 }
 
@@ -127,4 +129,15 @@ export async function updateRider(
 
 export async function deleteRider(id: string): Promise<void> {
   await airtableDelete("Riders", id);
+}
+
+export async function updateRiderFcmToken(id: string, fcmToken: string): Promise<void> {
+  await airtableUpdate("Riders", id, { "FCM Token": fcmToken });
+}
+
+export async function getAdminRiders(): Promise<Rider[]> {
+  const records = await airtableList<RiderFields>("Riders", {
+    filterByFormula: `AND({Active} = TRUE(), {Role} = "Admin")`,
+  });
+  return records.map(mapToRider);
 }

@@ -65,8 +65,16 @@ function scoreRider(
     speedEfficiency = Math.min(100, (fleetBenchmarkMinPerKm / avgMinPerKm) * 100);
   }
 
-  // —— Route Efficiency (null — single distance field; can't separate planned vs actual) ——
-  const routeEfficiency: number | null = null;
+  // —— Route Efficiency (planned vs actual distance, 0-100) ——
+  const routeStops = completed.filter(
+    (s) => (s.distanceKm ?? 0) > 0 && (s.plannedDistanceKm ?? 0) > 0
+  );
+  let routeEfficiency: number | null = null;
+  if (routeStops.length > 0) {
+    const totalActual = routeStops.reduce((s, x) => s + x.distanceKm!, 0);
+    const totalPlanned = routeStops.reduce((s, x) => s + x.plannedDistanceKm!, 0);
+    routeEfficiency = Math.min(100, Math.round((totalPlanned / totalActual) * 100));
+  }
 
   // —— Consistency (0-100 | null) ——
   const clockInDates = new Set(
@@ -128,7 +136,7 @@ function scoreRider(
     rider: { id: data.riderId, displayId: data.displayId, name: data.name, photoUrl: data.photoUrl },
     speedEfficiency: speedEfficiency !== null ? Math.round(speedEfficiency) : null,
     completionRate: Math.round(completionRate),
-    routeEfficiency: null,
+    routeEfficiency: routeEfficiency,
     consistency: consistency !== null ? Math.round(consistency) : null,
     finalScore,
     rating: getRating(finalScore, stops.length > 0),

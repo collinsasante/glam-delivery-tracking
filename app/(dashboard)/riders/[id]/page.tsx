@@ -12,15 +12,22 @@ export const metadata: Metadata = { title: "Rider Profile" };
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ date?: string }>;
 }
 
-export default async function RiderDetailPage({ params }: Props) {
+const DATE_FILTERS = ["all", "today", "week", "month"] as const;
+type DateFilter = typeof DATE_FILTERS[number];
+
+export default async function RiderDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const sp = await searchParams;
+  const dateFilter = (DATE_FILTERS.includes(sp.date as DateFilter) ? sp.date : "all") as DateFilter;
+
   const rider = await getRiderById(id);
   if (!rider) notFound();
 
   const [deliveries, todayClockEvents] = await Promise.all([
-    getDeliveries({ riderId: id }),
+    getDeliveries({ riderId: id, date: dateFilter === "all" ? undefined : dateFilter }),
     getTodayClockEvents(rider.id),
   ]);
   const completed = deliveries.filter((d) => d.status === "Completed");
@@ -181,15 +188,37 @@ export default async function RiderDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Recent deliveries */}
-      {deliveries.length > 0 && (
-        <div className="space-y-2">
+      {/* Delivery history */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-4">
           <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-400" />
-            Recent deliveries
+            Deliveries
+            <span className="font-normal text-gray-400">({deliveries.length})</span>
           </h2>
+          <div className="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
+            {(["all", "today", "week", "month"] as const).map((f) => (
+              <Link
+                key={f}
+                href={`/riders/${id}?date=${f}`}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                  dateFilter === f
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {f === "all" ? "All" : f === "today" ? "Today" : f === "week" ? "Week" : "Month"}
+              </Link>
+            ))}
+          </div>
+        </div>
+        {deliveries.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-8 text-center">
+            <p className="text-sm text-gray-400">No deliveries for this period</p>
+          </div>
+        ) : (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            {deliveries.slice(0, 8).map((d, i) => (
+            {deliveries.map((d, i) => (
               <Link
                 key={d.id}
                 href={`/deliveries/${d.id}/edit`}
@@ -231,8 +260,8 @@ export default async function RiderDetailPage({ params }: Props) {
               </Link>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

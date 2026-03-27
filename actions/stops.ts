@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { completeStop, startStop, createStop, getStopsForDelivery } from "@/services/stops";
 import { updateDeliveryStatus, getDeliveryById } from "@/services/deliveries";
+import { getAdminRiders } from "@/services/riders";
+import { sendPushToTokens } from "@/lib/notifications";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -100,9 +102,22 @@ export async function markArrivedAction(
     }
 
     // No stop (or all stops done) — mark delivery completed
+    const delivery = await getDeliveryById(deliveryId);
     await updateDeliveryStatus(deliveryId, "Completed", {
       deliveryTime: now.toTimeString().slice(0, 5),
     });
+
+    // Notify admins
+    const admins = await getAdminRiders().catch(() => []);
+    const adminTokens = admins.map((a) => a.fcmToken).filter(Boolean) as string[];
+    if (adminTokens.length > 0) {
+      await sendPushToTokens(
+        adminTokens,
+        "Delivery completed",
+        `${delivery?.customerName ?? "A delivery"} has been delivered`,
+        { type: "delivery_completed", deliveryId }
+      );
+    }
 
     revalidatePath("/rider");
     revalidatePath(`/rider/deliveries/${deliveryId}`);

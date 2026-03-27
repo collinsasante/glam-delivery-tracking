@@ -19,8 +19,7 @@ export default async function ExpensesPage() {
     riderName: riderMap[e.riderId] ?? "Unknown",
   }));
 
-  const pending = expenses.filter((e) => e.status === "Pending");
-  const pendingTotal = pending.reduce((sum, e) => sum + e.amount, 0);
+  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="space-y-5">
@@ -29,27 +28,17 @@ export default async function ExpensesPage() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Expenses</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {pending.length > 0
-              ? `${pending.length} pending · GH₵${pendingTotal.toFixed(2)} to review`
-              : `${expenses.length} total expenses`}
+            {expenses.length > 0
+              ? `${expenses.length} records · GH₵${totalAmount.toFixed(2)} total`
+              : "No expenses yet"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {pending.length > 0 && (
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span className="text-xs font-medium text-amber-700">
-                {pending.length} awaiting review
-              </span>
-            </div>
-          )}
-          <Link href="/expenses/new">
-            <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
-              <Plus className="h-4 w-4" />
-              Add Expense
-            </Button>
-          </Link>
-        </div>
+        <Link href="/expenses/new">
+          <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
+            <Plus className="h-4 w-4" />
+            Add Expense
+          </Button>
+        </Link>
       </div>
 
       {expenses.length === 0 ? (
@@ -59,7 +48,7 @@ export default async function ExpensesPage() {
           </div>
           <p className="text-sm font-medium text-gray-700">No expenses yet</p>
           <p className="text-xs text-gray-400 mt-1">
-            Rider-submitted expenses will appear here
+            Add an expense to get started
           </p>
         </div>
       ) : (

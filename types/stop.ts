@@ -8,6 +8,7 @@ export interface DeliveryStop {
   toLocation: string;
   dropoffLocation: string;
   distanceKm: number | null;
+  plannedDistanceKm: number | null;
   startedAt: string | null;
   arrivedAt: string | null;
   durationMins: number | null;

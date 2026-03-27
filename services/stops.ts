@@ -9,6 +9,7 @@ interface StopFields {
   "To Location"?: string;
   "Dropoff Location"?: string;
   "Distance (km)"?: number;
+  "Planned Distance"?: string;
   "Started Time"?: string;
   "Arrived Time"?: string;
   "Duration (mins)"?: number;
@@ -38,6 +39,7 @@ function mapToStop(
     toLocation: f["To Location"] ?? "",
     dropoffLocation: f["Dropoff Location"] ?? "",
     distanceKm: f["Distance (km)"] ?? null,
+    plannedDistanceKm: f["Planned Distance"] ? parseFloat(f["Planned Distance"]) || null : null,
     startedAt: f["Started Time"] ?? null,
     arrivedAt: f["Arrived Time"] ?? null,
     durationMins: f["Duration (mins)"] ?? null,

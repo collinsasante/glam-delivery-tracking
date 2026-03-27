@@ -156,7 +156,7 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
         <div className="grid grid-cols-2 gap-4 pt-5 border-t border-gray-100">
           <MetricBar label="Speed Efficiency" value={score.speedEfficiency} weight="40% weight" color="bg-blue-400" />
           <MetricBar label="Completion Rate" value={score.completionRate} weight="30% weight" color="bg-green-400" />
-          <MetricBar label="Route Efficiency" value={score.routeEfficiency} weight="20% weight — N/A" color="bg-amber-400" />
+          <MetricBar label="Route Efficiency" value={score.routeEfficiency} weight="20% weight" color="bg-amber-400" />
           <MetricBar label="Consistency" value={score.consistency} weight="10% weight" color="bg-red-400" />
         </div>
       </div>

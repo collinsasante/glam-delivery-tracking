@@ -13,6 +13,7 @@ interface StopFields {
   Delivery?: string[];
   "Stop Number"?: number;
   "Distance (km)"?: number;
+  "Planned Distance"?: string;
   "Duration (mins)"?: number;
   "Arrived Time"?: string;
   Status?: string;
@@ -93,9 +94,11 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
 
         const riderId = meta.riderId;
         if (!stopsByRider.has(riderId)) stopsByRider.set(riderId, []);
+        const pd = rec.fields["Planned Distance"];
         stopsByRider.get(riderId)!.push({
           id: rec.id,
           distanceKm: rec.fields["Distance (km)"] ?? null,
+          plannedDistanceKm: pd ? parseFloat(pd) || null : null,
           durationMins: rec.fields["Duration (mins)"] ?? null,
           status: (rec.fields["Status"] as StopRaw["status"]) ?? "Pending",
           deliveryDate: meta.date,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getDeliveries } from "@/services/deliveries";
 import { getRiders } from "@/services/riders";
 import { DeliveryTable } from "@/components/dashboard/DeliveryTable";
+import { ExportButton } from "@/components/dashboard/ExportButton";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Plus } from "lucide-react";
@@ -46,12 +47,15 @@ export default async function DeliveriesPage({ searchParams }: Props) {
             {enriched.length} total
           </p>
         </div>
-        <Link href="/deliveries/new">
-          <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
-            <Plus className="h-4 w-4" />
-            New Delivery
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportButton deliveries={enriched} />
+          <Link href="/deliveries/new">
+            <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
+              <Plus className="h-4 w-4" />
+              New Delivery
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Toolbar */}

@@ -12,5 +12,6 @@ export interface Rider {
   active: boolean;
   joinedDate: string;
   photoUrl: string | null;
+  fcmToken: string | null;
 }
 

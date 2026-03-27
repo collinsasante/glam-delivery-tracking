@@ -4,6 +4,7 @@ import { signOutAction } from "@/actions/auth";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
 import type { SessionPayload } from "@/lib/session";
+import { FcmRegistration } from "@/components/rider/FcmRegistration";
 
 export default async function RiderLayout({
   children,
@@ -47,6 +48,7 @@ export default async function RiderLayout({
           </form>
         </div>
       </header>
+      <FcmRegistration />
       <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
     </div>
   );

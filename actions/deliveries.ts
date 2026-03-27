@@ -11,6 +11,8 @@ import {
   updateDelivery,
 } from "@/services/deliveries";
 import { createStop, deleteStopsForDelivery } from "@/services/stops";
+import { getRiderById } from "@/services/riders";
+import { sendPushNotification } from "@/lib/notifications";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -73,6 +75,20 @@ export async function createDeliveryAction(
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/deliveries");
+
+    // Notify assigned rider
+    if (assignedRiderId) {
+      const rider = await getRiderById(assignedRiderId).catch(() => null);
+      if (rider?.fcmToken) {
+        await sendPushNotification(
+          rider.fcmToken,
+          "New delivery assigned",
+          `You have a new delivery for ${destinations[0].customerName}`,
+          { type: "delivery_assigned" }
+        );
+      }
+    }
+
     return { success: true };
   } catch (err) {
     console.error("createDelivery error:", err);

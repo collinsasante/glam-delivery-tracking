@@ -1,4 +1,4 @@
-export type ExpenseStatus = "Pending" | "Approved" | "Rejected" | "Paid";
+export type ExpenseStatus = "Pending" | "Rejected" | "Paid";
 
 export interface Expense {
   id: string;

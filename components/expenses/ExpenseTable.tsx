@@ -22,10 +22,6 @@ const statusConfig: Record<string, { dot: string; pill: string }> = {
     dot: "bg-amber-400",
     pill: "bg-amber-50 text-amber-700 border-amber-200",
   },
-  Approved: {
-    dot: "bg-blue-400",
-    pill: "bg-blue-50 text-blue-700 border-blue-200",
-  },
   Paid: {
     dot: "bg-green-400",
     pill: "bg-green-50 text-green-700 border-green-200",

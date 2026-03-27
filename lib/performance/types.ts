@@ -8,6 +8,7 @@ export interface DateRange {
 export interface StopRaw {
   id: string;
   distanceKm: number | null;
+  plannedDistanceKm: number | null;
   durationMins: number | null;
   status: "Pending" | "In Progress" | "Completed";
   deliveryDate: string;
@@ -57,7 +58,7 @@ export interface RiderPerformanceScore {
   };
   speedEfficiency: number | null;   // 0-100 or null
   completionRate: number;           // 0-100
-  routeEfficiency: number | null;   // null — not computable in current schema
+  routeEfficiency: number | null;   // 0-100 or null
   consistency: number | null;       // 0-100 or null
   finalScore: number;               // 0-100 weighted
   rating: RatingLabel;

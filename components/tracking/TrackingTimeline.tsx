@@ -52,7 +52,7 @@ export function TrackingTimeline({ stops }: Props) {
                     : "text-gray-400"
                 )}
               >
-                {stop.dropoffLocation}
+                {stop.toLocation || stop.dropoffLocation}
               </p>
               {isCompleted && stop.arrivedAt && (
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -62,6 +62,16 @@ export function TrackingTimeline({ stops }: Props) {
                     minute: "2-digit",
                   })}
                 </p>
+              )}
+              {isCompleted && stop.riderGps && (
+                <a
+                  href={`https://maps.google.com/?q=${stop.riderGps.lat},${stop.riderGps.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-green-600 hover:underline mt-0.5 inline-block"
+                >
+                  View drop point →
+                </a>
               )}
               {isActive && (
                 <p className="text-xs text-blue-500 mt-0.5 font-medium">

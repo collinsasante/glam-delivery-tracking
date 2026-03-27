@@ -29,8 +29,9 @@ export default async function DashboardPage({ searchParams }: Props) {
   const date = (params.date ?? "all") as "today" | "week" | "month" | "all";
   const search = params.search ?? "";
 
-  const [deliveries, riders] = await Promise.all([
+  const [deliveries, allDeliveries, riders] = await Promise.all([
     getDeliveries({ status, date, search }),
+    getDeliveries({}),
     getRiders(),
   ]);
   const riderMap = Object.fromEntries(riders.map((r) => [r.id, r.name]));
@@ -72,7 +73,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </div>
         }
       >
-        <StatsGrid deliveries={enriched} />
+        <StatsGrid deliveries={allDeliveries} />
       </Suspense>
 
       {/* Deliveries section */}
