@@ -9,6 +9,15 @@ interface ClockEventFields {
   Time?: string;
   Timestamp?: string;
   "Duration (mins)"?: number;
+  /** Stored as "lat,lng" text — only set on Clock In events */
+  "Clock-in Location"?: string;
+}
+
+function parseLocation(str?: string): { lat: number; lng: number } | null {
+  if (!str) return null;
+  const [lat, lng] = str.split(",").map((s) => parseFloat(s.trim()));
+  if (isNaN(lat) || isNaN(lng)) return null;
+  return { lat, lng };
 }
 
 function mapToClockEvent(
@@ -23,6 +32,7 @@ function mapToClockEvent(
     time: f["Time"] ?? "",
     timestamp: f["Timestamp"] ?? "",
     durationMins: f["Duration (mins)"] ?? null,
+    clockInLocation: parseLocation(f["Clock-in Location"]),
   };
 }
 
@@ -88,9 +98,10 @@ export async function createClockEvent(data: {
   riderId: string;
   eventType: "Clock In" | "Clock Out";
   durationMins?: number;
+  gps?: { lat: number; lng: number };
 }): Promise<ClockEvent> {
   const now = new Date();
-  const record = await airtableCreate<ClockEventFields>("Clock Events", {
+  const fields: Record<string, unknown> = {
     Rider: [data.riderId],
     "Event Type": data.eventType,
     Date: now.toISOString().split("T")[0],
@@ -99,6 +110,11 @@ export async function createClockEvent(data: {
     ...(data.durationMins !== undefined && {
       "Duration (mins)": data.durationMins,
     }),
-  });
+  };
+  if (data.eventType === "Clock In" && data.gps) {
+    fields["Clock-in Location"] = `${data.gps.lat.toFixed(6)},${data.gps.lng.toFixed(6)}`;
+    console.log("[clockEvent] Clock-in GPS captured:", fields["Clock-in Location"]);
+  }
+  const record = await airtableCreate<ClockEventFields>("Clock Events", fields);
   return mapToClockEvent(record);
 }

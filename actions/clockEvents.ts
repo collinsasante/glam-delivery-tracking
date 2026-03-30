@@ -13,7 +13,9 @@ type ActionResult =
   | { success: true; timestamp: string }
   | { error: string };
 
-export async function clockInAction(): Promise<ActionResult> {
+export async function clockInAction(
+  gps?: { lat: number; lng: number }
+): Promise<ActionResult> {
   const session = await auth();
   if (!session) return { error: "Unauthorized" };
 
@@ -28,11 +30,12 @@ export async function clockInAction(): Promise<ActionResult> {
     const hasClockInToday = todayEvents.some((e) => e.eventType === "Clock In");
     if (hasClockInToday) return { error: "You've already clocked in today. You can only clock in once per day." };
 
-    const event = await createClockEvent({ riderId, eventType: "Clock In" });
+    console.log("[clockInAction] GPS received:", gps ?? "none (permission denied or unavailable)");
+    const event = await createClockEvent({ riderId, eventType: "Clock In", gps });
     revalidatePath("/rider");
     return { success: true, timestamp: event.timestamp };
   } catch (err) {
-    console.error("clockIn error:", err);
+    console.error("[clockInAction] error:", err);
     return { error: "Failed to clock in. Please try again." };
   }
 }

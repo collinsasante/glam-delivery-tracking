@@ -65,7 +65,8 @@ export async function startDeliveryAction(
       );
     }
 
-    await startStop(resolvedStopId);
+    console.log("[startDeliveryAction] Starting stop", resolvedStopId, "GPS:", riderGps ?? "none", "distance:", distanceKm ?? "not measured");
+    await startStop(resolvedStopId, riderGps);
     revalidatePath("/rider");
     return { success: true };
   } catch (err) {

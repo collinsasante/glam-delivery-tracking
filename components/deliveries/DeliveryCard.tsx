@@ -1,9 +1,10 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Navigation, Loader2, Package, CheckCircle2 } from "lucide-react";
+import { MapPin, Phone, Navigation, Loader2, Package, CheckCircle2, ChevronRight } from "lucide-react";
 import { startDeliveryAction, markArrivedAction } from "@/actions/stops";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { toast } from "sonner";
@@ -73,7 +74,7 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
             <span className="font-mono text-[11px] text-gray-400 leading-none">
               {delivery.deliveryId}
@@ -93,18 +94,28 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
             {delivery.customerName}
           </p>
         </div>
-        {variant === "completed" && (
-          <div className="flex items-center gap-1 text-green-600 shrink-0">
-            <CheckCircle2 className="h-4 w-4" />
-            <span className="text-xs font-medium">Done</span>
-          </div>
-        )}
-        {variant === "active" && (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-            Active
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {variant === "completed" && (
+            <div className="flex items-center gap-1 text-green-600">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-xs font-medium">Done</span>
+            </div>
+          )}
+          {variant === "active" && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              Active
+            </span>
+          )}
+          <Link
+            href={`/rider/deliveries/${delivery.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-1 rounded-md text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            aria-label="View delivery details"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Details */}

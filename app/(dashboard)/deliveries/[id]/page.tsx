@@ -240,12 +240,26 @@ export default async function DeliveryDetailPage({ params }: Props) {
         <div className="space-y-3">
           {/* Pickup */}
           <div className="flex items-start gap-3">
-            <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+            {activeStop?.startGps ? (
+              <MapPin className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
+            ) : (
+              <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+            )}
             <div>
               <p className="text-[10px] text-gray-400 mb-0.5">Pickup</p>
               <p className="text-sm text-gray-700">
                 {displayStop?.fromLocation || delivery.warehouse || "—"}
               </p>
+              {activeStop?.startGps && (
+                <a
+                  href={`https://maps.google.com/?q=${activeStop.startGps.lat},${activeStop.startGps.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs text-gray-400 hover:text-red-800 hover:underline mt-0.5 inline-block"
+                >
+                  {activeStop.startGps.lat.toFixed(6)}, {activeStop.startGps.lng.toFixed(6)} →
+                </a>
+              )}
             </div>
           </div>
           <div className="ml-1 w-px h-4 bg-gray-200" />

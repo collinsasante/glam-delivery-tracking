@@ -7,6 +7,8 @@ interface DeliveryFields {
   "Assigned Rider"?: string[];
   Status: string;
   "Delivery Date": string;
+  /** Delivery-level distance — used as fallback when the stop has no distanceKm */
+  Distance?: number;
 }
 
 interface StopFields {
@@ -57,11 +59,12 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
     maxRecords: "500",
   });
 
-  const deliveryMeta = new Map<string, { riderId: string | null; date: string }>();
+  const deliveryMeta = new Map<string, { riderId: string | null; date: string; distanceKm: number | null }>();
   for (const rec of deliveryRecords) {
     deliveryMeta.set(rec.id, {
       riderId: rec.fields["Assigned Rider"]?.[0] ?? null,
       date: rec.fields["Delivery Date"] ?? "",
+      distanceKm: rec.fields["Distance"] ?? null,
     });
   }
 
@@ -95,9 +98,12 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
         const riderId = meta.riderId;
         if (!stopsByRider.has(riderId)) stopsByRider.set(riderId, []);
         const pd = rec.fields["Planned Distance"];
+        // Use stop's measured distance; fall back to delivery-level distance (OSRM-updated) if null
+        const stopDistKm = rec.fields["Distance (km)"] ?? meta.distanceKm ?? null;
+        console.log(`[perf] stop ${rec.id} distanceKm: stop=${rec.fields["Distance (km)"] ?? "null"} fallback=${meta.distanceKm ?? "null"} → ${stopDistKm}`);
         stopsByRider.get(riderId)!.push({
           id: rec.id,
-          distanceKm: rec.fields["Distance (km)"] ?? null,
+          distanceKm: stopDistKm,
           plannedDistanceKm: pd ? parseFloat(pd) || null : null,
           durationMins: rec.fields["Duration (mins)"] ?? null,
           status: (rec.fields["Status"] as StopRaw["status"]) ?? "Pending",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Clock, LogIn, LogOut, Loader2 } from "lucide-react";
 import { clockInAction, clockOutAction } from "@/actions/clockEvents";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClockIn } from "./ClockInContext";
@@ -22,6 +23,7 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
   const [hasClockInToday, setHasClockInToday] = useState(initialHasClockInToday ?? false);
   const [elapsed, setElapsed] = useState("");
   const [isPending, startTransition] = useTransition();
+  const { capture } = useGeolocation();
   const router = useRouter();
 
   useEffect(() => {
@@ -43,8 +45,20 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
 
   function handle() {
     startTransition(async () => {
-      const action = isClockedIn ? clockOutAction : clockInAction;
-      const result = await action();
+      let result;
+      if (isClockedIn) {
+        result = await clockOutAction();
+      } else {
+        // Capture GPS location for clock-in; proceed even if denied
+        const gps = await capture();
+        if (!gps) {
+          console.warn("[ClockIn] GPS unavailable or denied — clocking in without location");
+          toast("Location unavailable — clocking in without GPS", { icon: "⚠️" });
+        } else {
+          console.log("[ClockIn] GPS captured:", gps);
+        }
+        result = await clockInAction(gps ?? undefined);
+      }
 
       if ("error" in result) {
         console.error("[ClockIn] action error:", result.error);

@@ -74,8 +74,10 @@ export default async function ExpenseDetailPage({ params }: Props) {
                 <Link href={`/riders/${rider.id}`} className="font-medium text-red-800 hover:text-red-700">
                   {rider.name} · {rider.riderId}
                 </Link>
+              ) : expense.riderName ? (
+                <p className="font-medium text-gray-700">{expense.riderName}</p>
               ) : (
-                <p className="font-medium text-gray-700">{expense.riderId}</p>
+                <p className="font-medium text-gray-400">—</p>
               )}
             </div>
           </div>

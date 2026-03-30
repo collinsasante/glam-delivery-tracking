@@ -8,4 +8,6 @@ export interface ClockEvent {
   time: string;
   timestamp: string;
   durationMins: number | null;
+  /** GPS coordinates captured at clock-in (null for clock-out or if permission denied) */
+  clockInLocation: { lat: number; lng: number } | null;
 }

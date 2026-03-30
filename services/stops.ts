@@ -14,6 +14,7 @@ interface StopFields {
   "Arrived Time"?: string;
   "Duration (mins)"?: number;
   Status?: string;
+  "Start GPS"?: string;
   "Rider GPS"?: string;
   "Rider IP"?: string;
 }
@@ -44,6 +45,7 @@ function mapToStop(
     arrivedAt: f["Arrived Time"] ?? null,
     durationMins: f["Duration (mins)"] ?? null,
     status: (f["Status"] as DeliveryStop["status"]) ?? "Pending",
+    startGps: parseGps(f["Start GPS"]),
     riderGps: parseGps(f["Rider GPS"]),
     riderIp: f["Rider IP"] ?? null,
   };
@@ -102,11 +104,21 @@ export async function createStop(data: {
   return mapToStop(record);
 }
 
-export async function startStop(stopId: string): Promise<void> {
-  await airtableUpdate("Delivery Stops", stopId, {
+export async function startStop(
+  stopId: string,
+  gps?: { lat: number; lng: number }
+): Promise<void> {
+  const fields: Record<string, unknown> = {
     Status: "In Progress",
     "Started Time": new Date().toISOString(),
-  });
+  };
+  if (gps) {
+    fields["Start GPS"] = `${gps.lat.toFixed(6)},${gps.lng.toFixed(6)}`;
+    console.log("[startStop] Start GPS stored:", fields["Start GPS"]);
+  } else {
+    console.warn("[startStop] No GPS provided — start location not recorded");
+  }
+  await airtableUpdate("Delivery Stops", stopId, fields);
 }
 
 export async function completeStop(

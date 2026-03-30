@@ -148,39 +148,54 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">
             Today&apos;s Attendance
           </p>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {todayClockEvents.map((event) => (
-              <div key={event.id} className="flex items-center gap-3">
-                <Clock
-                  className={`h-4 w-4 shrink-0 ${
-                    event.eventType === "Clock In"
-                      ? "text-green-500"
-                      : "text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`text-xs font-medium w-16 ${
-                    event.eventType === "Clock In"
-                      ? "text-green-700"
-                      : "text-gray-500"
-                  }`}
-                >
-                  {event.eventType}
-                </span>
-                <span className="font-mono text-sm text-gray-700">
-                  {event.time
-                    ? (() => {
-                        const [h, m] = event.time.split(":").map(Number);
-                        const suffix = h >= 12 ? "PM" : "AM";
-                        const hour = h % 12 || 12;
-                        return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
-                      })()
-                    : "—"}
-                </span>
-                {event.durationMins != null && (
-                  <span className="text-xs text-gray-400 ml-auto">
-                    {event.durationMins} min shift
+              <div key={event.id} className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <Clock
+                    className={`h-4 w-4 shrink-0 ${
+                      event.eventType === "Clock In"
+                        ? "text-green-500"
+                        : "text-gray-400"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs font-medium w-16 ${
+                      event.eventType === "Clock In"
+                        ? "text-green-700"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {event.eventType}
                   </span>
+                  <span className="font-mono text-sm text-gray-700">
+                    {event.time
+                      ? (() => {
+                          const [h, m] = event.time.split(":").map(Number);
+                          const suffix = h >= 12 ? "PM" : "AM";
+                          const hour = h % 12 || 12;
+                          return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
+                        })()
+                      : "—"}
+                  </span>
+                  {event.durationMins != null && (
+                    <span className="text-xs text-gray-400 ml-auto">
+                      {event.durationMins} min shift
+                    </span>
+                  )}
+                </div>
+                {event.eventType === "Clock In" && event.clockInLocation && (
+                  <a
+                    href={`https://maps.google.com/?q=${event.clockInLocation.lat},${event.clockInLocation.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-7 text-xs font-mono text-gray-400 hover:text-red-800 hover:underline"
+                  >
+                    📍 {event.clockInLocation.lat.toFixed(5)}, {event.clockInLocation.lng.toFixed(5)}
+                  </a>
+                )}
+                {event.eventType === "Clock In" && !event.clockInLocation && (
+                  <p className="ml-7 text-xs text-gray-300">No location</p>
                 )}
               </div>
             ))}
