@@ -12,7 +12,8 @@ export function StatsGrid({ deliveries }: Props) {
   const todayCompleted = deliveries.filter(
     (d) => d.status === "Completed" && d.deliveryDate === today
   );
-  const distanceToday = todayCompleted.reduce(
+  const allCompleted = deliveries.filter((d) => d.status === "Completed");
+  const totalDistance = allCompleted.reduce(
     (sum, d) => sum + (d.distance ?? 0),
     0
   );
@@ -43,12 +44,12 @@ export function StatsGrid({ deliveries }: Props) {
       href: "/deliveries?status=Completed&date=today",
     },
     {
-      label: "Distance Today",
-      value: `${distanceToday.toFixed(1)} km`,
+      label: "Total Distance",
+      value: `${totalDistance.toFixed(1)} km`,
       icon: MapPin,
       iconBg: "bg-red-50",
       iconColor: "text-red-600",
-      href: "/deliveries?status=Completed&date=today",
+      href: "/deliveries?status=Completed",
     },
   ];
 
