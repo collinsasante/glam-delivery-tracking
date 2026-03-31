@@ -59,6 +59,7 @@ export function ImageUpload({ value, onChange, disabled }: Props) {
               src={value}
               alt="Receipt"
               fill
+              sizes="(max-width: 640px) 100vw, 512px"
               className="object-contain"
             />
           </div>

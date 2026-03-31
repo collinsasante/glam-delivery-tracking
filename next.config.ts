@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        // Airtable attachment CDN (receipt photos uploaded directly to Airtable)
+        protocol: "https",
+        hostname: "*.airtableusercontent.com",
+      },
     ],
   },
   async headers() {

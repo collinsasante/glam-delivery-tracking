@@ -23,7 +23,13 @@ export default async function PerformancePage({ searchParams }: Props) {
   const period = (PERIODS.includes(params.period as Period) ? params.period : "monthly") as Period;
   const range = getDateRange(period, params.from, params.to);
 
-  const rawData = await getPerformanceData(range);
+  let rawData;
+  try {
+    rawData = await getPerformanceData(range);
+  } catch (err) {
+    console.error("[performance] getPerformanceData failed:", err);
+    rawData = [];
+  }
   const { scores, summary } = computeFleetScores(rawData, range);
 
   const label = formatPeriodLabel(period);
