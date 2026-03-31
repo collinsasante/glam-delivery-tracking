@@ -63,12 +63,13 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
   });
   console.log(`[performance] deliveries in range: ${deliveryRecords.length}`, deliveryRecords.slice(0, 3).map(r => ({ id: r.id, date: r.fields["Delivery Date"], rider: r.fields["Assigned Rider"]?.[0], status: r.fields["Status"] })));
 
-  const deliveryMeta = new Map<string, { riderId: string | null; date: string; distanceKm: number | null }>();
+  const deliveryMeta = new Map<string, { riderId: string | null; date: string; distanceKm: number | null; deliveryStatus: string }>();
   for (const rec of deliveryRecords) {
     deliveryMeta.set(rec.id, {
       riderId: rec.fields["Assigned Rider"]?.[0] ?? null,
       date: rec.fields["Delivery Date"] ?? "",
       distanceKm: rec.fields["Distance"] ?? null,
+      deliveryStatus: rec.fields["Status"] ?? "Pending",
     });
   }
 
@@ -96,12 +97,22 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
       if (!stopsByRider.has(riderId)) stopsByRider.set(riderId, []);
       const pd = rec.fields["Planned Distance"];
       const stopDistKm = rec.fields["Distance (km)"] ?? meta.distanceKm ?? null;
+      // If the stop's own status is still Pending but the delivery was marked Completed
+      // (old flow: delivery marked directly without going through stop completion), treat
+      // the stop as Completed so historical deliveries count toward performance.
+      const rawStopStatus = rec.fields["Status"] ?? "Pending";
+      const effectiveStatus: StopRaw["status"] =
+        rawStopStatus === "Completed" || rawStopStatus === "In Progress"
+          ? (rawStopStatus as StopRaw["status"])
+          : meta.deliveryStatus === "Completed"
+          ? "Completed"
+          : "Pending";
       stopsByRider.get(riderId)!.push({
         id: rec.id,
         distanceKm: stopDistKm,
         plannedDistanceKm: pd ? parseFloat(pd) || null : null,
         durationMins: rec.fields["Duration (mins)"] ?? null,
-        status: (rec.fields["Status"] as StopRaw["status"]) ?? "Pending",
+        status: effectiveStatus,
         deliveryDate: meta.date,
         arrivedAt: rec.fields["Arrived Time"] ?? null,
       });
