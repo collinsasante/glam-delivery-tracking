@@ -11,7 +11,7 @@ import type { Expense } from "@/types/expense";
 
 interface ExpenseFields {
   Rider?: string[];
-  "Category"?: string;
+  "Expense Type"?: string;
   Amount?: number;
   Description?: string;
   Date?: string;
@@ -29,7 +29,7 @@ function mapToExpense(
     id: record.id,
     riderId: f["Rider"]?.[0] ?? "",
     riderName: null,
-    expenseType: f["Category"] ?? "",
+    expenseType: f["Expense Type"] ?? "",
     amount: f["Amount"] ?? 0,
     description: f["Description"] ?? null,
     date: f["Date"] ?? "",
@@ -72,7 +72,7 @@ export async function createExpense(data: {
 }): Promise<Expense> {
   const fields: Record<string, unknown> = {
     Rider: [data.riderId],
-    "Category": data.expenseType,
+    "Expense Type": data.expenseType,
     Amount: data.amount,
     Date: data.date,
     Status: "Paid",

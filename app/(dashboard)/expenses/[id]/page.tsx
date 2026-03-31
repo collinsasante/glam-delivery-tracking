@@ -141,6 +141,7 @@ export default async function ExpenseDetailPage({ params }: Props) {
                 src={expense.receiptUrl}
                 alt="Receipt"
                 fill
+                sizes="(max-width: 640px) 100vw, 512px"
                 className="object-contain"
               />
             </div>

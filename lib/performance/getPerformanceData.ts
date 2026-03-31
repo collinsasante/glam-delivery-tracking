@@ -1,5 +1,5 @@
 import "server-only";
-import { airtableList, escapeAirtableValue } from "@/lib/airtable";
+import { airtableList } from "@/lib/airtable";
 import type { RiderRawData, StopRaw, ClockEventRaw, DateRange } from "./types";
 
 interface DeliveryFields {
@@ -75,47 +75,36 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
   const deliveryIds = deliveryRecords.map((r) => r.id);
   const stopsByRider = new Map<string, StopRaw[]>();
 
-  // 3. Stops for those deliveries
+  // 3. Stops for those deliveries — ARRAYJOIN({Delivery}) returns display names not record IDs,
+  // so we cannot filter by delivery ID in Airtable formulas. Instead, pull all stops and join
+  // client-side using the Delivery field which returns actual record IDs in the API response.
   if (deliveryIds.length > 0) {
-    const chunks: string[][] = [];
-    for (let i = 0; i < deliveryIds.length; i += 30) {
-      chunks.push(deliveryIds.slice(i, i + 30));
-    }
+    const deliveryIdSet = new Set(deliveryIds);
+    const stopRecords = await airtableList<StopFields>("Delivery Stops", {
+      sort: [{ field: "Stop Number", direction: "asc" }],
+      maxRecords: "2000",
+    });
+    console.log(`[performance] total stops fetched: ${stopRecords.length}, delivery IDs to match: ${deliveryIds.length}`);
 
-    for (const chunk of chunks) {
-      const stopFormula =
-        chunk.length === 1
-          ? `FIND("${escapeAirtableValue(chunk[0])}", ARRAYJOIN({Delivery}))`
-          : `OR(${chunk.map((id) => `FIND("${escapeAirtableValue(id)}", ARRAYJOIN({Delivery}))`).join(", ")})`;
+    for (const rec of stopRecords) {
+      const deliveryRecId = rec.fields["Delivery"]?.[0];
+      if (!deliveryRecId || !deliveryIdSet.has(deliveryRecId)) continue;
+      const meta = deliveryMeta.get(deliveryRecId);
+      if (!meta?.riderId) continue;
 
-      const stopRecords = await airtableList<StopFields>("Delivery Stops", {
-        filterByFormula: stopFormula,
-        sort: [{ field: "Stop Number", direction: "asc" }],
+      const riderId = meta.riderId;
+      if (!stopsByRider.has(riderId)) stopsByRider.set(riderId, []);
+      const pd = rec.fields["Planned Distance"];
+      const stopDistKm = rec.fields["Distance (km)"] ?? meta.distanceKm ?? null;
+      stopsByRider.get(riderId)!.push({
+        id: rec.id,
+        distanceKm: stopDistKm,
+        plannedDistanceKm: pd ? parseFloat(pd) || null : null,
+        durationMins: rec.fields["Duration (mins)"] ?? null,
+        status: (rec.fields["Status"] as StopRaw["status"]) ?? "Pending",
+        deliveryDate: meta.date,
+        arrivedAt: rec.fields["Arrived Time"] ?? null,
       });
-      console.log(`[performance] stops chunk (${chunk.length} deliveries) → ${stopRecords.length} stops found`);
-
-      for (const rec of stopRecords) {
-        const deliveryRecId = rec.fields["Delivery"]?.[0];
-        if (!deliveryRecId) continue;
-        const meta = deliveryMeta.get(deliveryRecId);
-        if (!meta?.riderId) continue;
-
-        const riderId = meta.riderId;
-        if (!stopsByRider.has(riderId)) stopsByRider.set(riderId, []);
-        const pd = rec.fields["Planned Distance"];
-        // Use stop's measured distance; fall back to delivery-level distance (OSRM-updated) if null
-        const stopDistKm = rec.fields["Distance (km)"] ?? meta.distanceKm ?? null;
-        console.log(`[perf] stop ${rec.id} distanceKm: stop=${rec.fields["Distance (km)"] ?? "null"} fallback=${meta.distanceKm ?? "null"} → ${stopDistKm}`);
-        stopsByRider.get(riderId)!.push({
-          id: rec.id,
-          distanceKm: stopDistKm,
-          plannedDistanceKm: pd ? parseFloat(pd) || null : null,
-          durationMins: rec.fields["Duration (mins)"] ?? null,
-          status: (rec.fields["Status"] as StopRaw["status"]) ?? "Pending",
-          deliveryDate: meta.date,
-          arrivedAt: rec.fields["Arrived Time"] ?? null,
-        });
-      }
     }
   }
 
