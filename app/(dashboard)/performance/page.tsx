@@ -1,64 +1,59 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import Link from "next/link";
 import { TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { getPerformanceData } from "@/lib/performance/getPerformanceData";
 import { computeFleetScores } from "@/lib/performance/calculatePerformance";
 import { getDateRange, formatPeriodLabel } from "@/lib/performance/dateUtils";
 import { PerformanceSummaryCards } from "@/components/performance/PerformanceSummaryCards";
 import { PerformanceTable } from "@/components/performance/PerformanceTable";
+import { PeriodSelector } from "@/components/performance/PeriodSelector";
 import type { Period } from "@/lib/performance/types";
 
 export const metadata: Metadata = { title: "Performance" };
 
-const PERIODS: Period[] = ["daily", "weekly", "monthly"];
+const PERIODS: Period[] = ["daily", "weekly", "monthly", "yearly", "custom"];
 
 interface Props {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 }
 
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
   const period = (PERIODS.includes(params.period as Period) ? params.period : "monthly") as Period;
-  const range = getDateRange(period);
+  const range = getDateRange(period, params.from, params.to);
 
   const rawData = await getPerformanceData(range);
   const { scores, summary } = computeFleetScores(rawData, range);
 
+  const label = formatPeriodLabel(period);
+  const rangeLabel =
+    period === "daily"
+      ? range.start
+      : period === "custom"
+      ? `${range.start} → ${range.end}`
+      : `${range.start} → ${range.end}`;
+
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Performance</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {formatPeriodLabel(period)} · {range.start}{period !== "daily" ? ` → ${range.end}` : ""}
+            {label} · {rangeLabel}
           </p>
         </div>
 
-        {/* Period tabs */}
-        <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg shrink-0">
-          {PERIODS.map((p) => (
-            <Link
-              key={p}
-              href={`/performance?period=${p}`}
-              className={cn(
-                "px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                period === p
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              )}
-            >
-              {formatPeriodLabel(p)}
-            </Link>
-          ))}
-        </div>
+        <PeriodSelector
+          current={period}
+          customFrom={params.from}
+          customTo={params.to}
+        />
       </div>
 
       {/* Summary cards */}
-      <PerformanceSummaryCards summary={summary} period={formatPeriodLabel(period)} />
+      <PerformanceSummaryCards summary={summary} period={label} />
 
       {/* Ranking table */}
       {scores.length === 0 ? (

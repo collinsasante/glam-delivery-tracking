@@ -1,6 +1,6 @@
 import type { Period, DateRange } from "./types";
 
-export function getDateRange(period: Period): DateRange {
+export function getDateRange(period: Period, customStart?: string, customEnd?: string): DateRange {
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
 
@@ -14,6 +14,15 @@ export function getDateRange(period: Period): DateRange {
     const monday = new Date(now);
     monday.setUTCDate(now.getUTCDate() - daysFromMonday);
     return { start: monday.toISOString().split("T")[0], end: todayStr };
+  }
+
+  if (period === "yearly") {
+    const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    return { start: yearStart.toISOString().split("T")[0], end: todayStr };
+  }
+
+  if (period === "custom" && customStart && customEnd) {
+    return { start: customStart, end: customEnd };
   }
 
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -34,6 +43,8 @@ export function datesBetween(start: string, end: string): string[] {
 export function formatPeriodLabel(period: Period): string {
   if (period === "daily") return "Today";
   if (period === "weekly") return "This Week";
+  if (period === "yearly") return "This Year";
+  if (period === "custom") return "Custom";
   return "This Month";
 }
 

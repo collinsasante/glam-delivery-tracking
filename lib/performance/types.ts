@@ -1,4 +1,4 @@
-export type Period = "daily" | "weekly" | "monthly";
+export type Period = "daily" | "weekly" | "monthly" | "yearly" | "custom";
 
 export interface DateRange {
   start: string; // YYYY-MM-DD
