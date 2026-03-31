@@ -8,7 +8,7 @@ import { getDateRange, formatPeriodLabel } from "@/lib/performance/dateUtils";
 import { PerformanceSummaryCards } from "@/components/performance/PerformanceSummaryCards";
 import { PerformanceTable } from "@/components/performance/PerformanceTable";
 import { PeriodSelector } from "@/components/performance/PeriodSelector";
-import type { Period } from "@/lib/performance/types";
+import type { Period, RiderRawData } from "@/lib/performance/types";
 
 export const metadata: Metadata = { title: "Performance" };
 
@@ -23,12 +23,11 @@ export default async function PerformancePage({ searchParams }: Props) {
   const period = (PERIODS.includes(params.period as Period) ? params.period : "monthly") as Period;
   const range = getDateRange(period, params.from, params.to);
 
-  let rawData;
+  let rawData: RiderRawData[] = [];
   try {
     rawData = await getPerformanceData(range);
   } catch (err) {
     console.error("[performance] getPerformanceData failed:", err);
-    rawData = [];
   }
   const { scores, summary } = computeFleetScores(rawData, range);
 
