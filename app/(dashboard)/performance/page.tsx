@@ -21,7 +21,7 @@ interface Props {
 
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
-  const period = (PERIODS.includes(params.period as Period) ? params.period : "daily") as Period;
+  const period = (PERIODS.includes(params.period as Period) ? params.period : "monthly") as Period;
   const range = getDateRange(period);
 
   const rawData = await getPerformanceData(range);

@@ -21,7 +21,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -45,6 +44,7 @@ export function AdminExpenseForm({ riders }: Props) {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: safeResolver,
@@ -72,18 +72,31 @@ export function AdminExpenseForm({ riders }: Props) {
           {/* Rider */}
           <div className="space-y-1.5">
             <Label>Rider</Label>
-            <Select onValueChange={(v) => setValue("riderId", v as string)}>
-              <SelectTrigger className={errors.riderId ? "border-red-400" : ""}>
-                <SelectValue placeholder="Select rider…" />
-              </SelectTrigger>
-              <SelectContent>
-                {riders.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    {r.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {(() => {
+              const selectedId = watch("riderId");
+              const selectedRider = riders.find((r) => r.id === selectedId);
+              return (
+                <Select
+                  value={selectedId ?? ""}
+                  onValueChange={(v) => setValue("riderId", v as string)}
+                >
+                  <SelectTrigger className={errors.riderId ? "border-red-400" : ""}>
+                    {selectedRider ? (
+                      <span className="flex-1 text-left truncate">{selectedRider.name}</span>
+                    ) : (
+                      <span className="flex-1 text-left text-muted-foreground">Select rider…</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {riders.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
             {errors.riderId && (
               <p className="text-xs text-red-500">{errors.riderId.message}</p>
             )}

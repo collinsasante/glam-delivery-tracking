@@ -39,11 +39,14 @@ interface RiderFields {
 }
 
 export async function getPerformanceData(range: DateRange): Promise<RiderRawData[]> {
+  console.log(`[performance] getPerformanceData called — range: ${range.start} → ${range.end}`);
+
   // 1. Active riders with role "Rider"
   const riderRecords = await airtableList<RiderFields>("Riders", {
     filterByFormula: `AND({Active} = TRUE(), {Role} = "Rider")`,
     maxRecords: "200",
   });
+  console.log(`[performance] riders found: ${riderRecords.length}`, riderRecords.map(r => ({ id: r.id, name: r.fields["Name"], role: r.fields["Role"], active: r.fields["Active"] })));
   if (!riderRecords.length) return [];
 
   const riders = riderRecords.map((r) => ({
@@ -58,6 +61,7 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
     filterByFormula: `AND({Delivery Date} >= "${range.start}", {Delivery Date} <= "${range.end}")`,
     maxRecords: "500",
   });
+  console.log(`[performance] deliveries in range: ${deliveryRecords.length}`, deliveryRecords.slice(0, 3).map(r => ({ id: r.id, date: r.fields["Delivery Date"], rider: r.fields["Assigned Rider"]?.[0], status: r.fields["Status"] })));
 
   const deliveryMeta = new Map<string, { riderId: string | null; date: string; distanceKm: number | null }>();
   for (const rec of deliveryRecords) {
@@ -88,6 +92,7 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
         filterByFormula: stopFormula,
         sort: [{ field: "Stop Number", direction: "asc" }],
       });
+      console.log(`[performance] stops chunk (${chunk.length} deliveries) → ${stopRecords.length} stops found`);
 
       for (const rec of stopRecords) {
         const deliveryRecId = rec.fields["Delivery"]?.[0];
@@ -119,6 +124,7 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
     filterByFormula: `AND({Date} >= "${range.start}", {Date} <= "${range.end}")`,
     sort: [{ field: "Timestamp", direction: "asc" }],
   });
+  console.log(`[performance] clock events in range: ${clockRecords.length}`, clockRecords.slice(0, 3).map(r => ({ id: r.id, rider: r.fields["Rider"]?.[0], eventType: r.fields["Event Type"], date: r.fields["Date"] })));
 
   const clockByRider = new Map<string, ClockEventRaw[]>();
   for (const rec of clockRecords) {
@@ -135,6 +141,8 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
   }
 
   // 5. Assemble
+  console.log(`[performance] stops by rider:`, Object.fromEntries([...stopsByRider.entries()].map(([k, v]) => [k, v.length])));
+  console.log(`[performance] clock events by rider:`, Object.fromEntries([...clockByRider.entries()].map(([k, v]) => [k, v.length])));
   return riders.map((rider) => ({
     riderId: rider.id,
     displayId: rider.displayId,
