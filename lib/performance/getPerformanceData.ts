@@ -7,6 +7,7 @@ interface DeliveryFields {
   "Assigned Rider"?: string[];
   Status: string;
   "Delivery Date": string;
+  "Completed Date"?: string;
   /** Delivery-level distance — used as fallback when the stop has no distanceKm */
   Distance?: number;
 }
@@ -56,9 +57,16 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
     photoUrl: r.fields["Photo URL"] ?? null,
   }));
 
-  // 2. All deliveries for the date range (all statuses — we need pending+active+completed for completion rate)
+  // 2. All deliveries for the date range.
+  // Completed deliveries are matched by Completed Date (actual finish date).
+  // Pending/active deliveries are matched by Delivery Date (scheduled date).
+  // This ensures "today" shows deliveries ACTUALLY completed today, not just
+  // those scheduled for today.
   const deliveryRecords = await airtableList<DeliveryFields>("Deliveries", {
-    filterByFormula: `AND({Delivery Date} >= "${range.start}", {Delivery Date} <= "${range.end}")`,
+    filterByFormula: `OR(
+      AND({Status} = "Completed", {Completed Date} >= "${range.start}", {Completed Date} <= "${range.end}"),
+      AND({Status} != "Completed", {Delivery Date} >= "${range.start}", {Delivery Date} <= "${range.end}")
+    )`,
     maxRecords: "500",
   });
   console.log(`[performance] deliveries in range: ${deliveryRecords.length}`, deliveryRecords.slice(0, 3).map(r => ({ id: r.id, date: r.fields["Delivery Date"], rider: r.fields["Assigned Rider"]?.[0], status: r.fields["Status"] })));

@@ -54,11 +54,9 @@ function mapToStop(
 export async function getStopsForDelivery(
   deliveryRecordId: string
 ): Promise<DeliveryStop[]> {
-  const records = await airtableList<StopFields>("Delivery Stops", {
-    filterByFormula: `FIND("${escapeAirtableValue(deliveryRecordId)}", ARRAYJOIN({Delivery}))`,
-    sort: [{ field: "Stop Number", direction: "asc" as const }],
-  });
-  return records.map(mapToStop);
+  // ARRAYJOIN expands to display names — filter client-side instead.
+  const map = await getStopsForDeliveries([deliveryRecordId]);
+  return map.get(deliveryRecordId) ?? [];
 }
 
 export async function getStopsForDeliveries(
@@ -66,22 +64,25 @@ export async function getStopsForDeliveries(
 ): Promise<Map<string, DeliveryStop[]>> {
   if (!deliveryIds.length) return new Map();
 
-  const formula =
-    deliveryIds.length === 1
-      ? `FIND("${escapeAirtableValue(deliveryIds[0])}", ARRAYJOIN({Delivery}))`
-      : `OR(${deliveryIds.map((id) => `FIND("${escapeAirtableValue(id)}", ARRAYJOIN({Delivery}))`).join(", ")})`;
-
+  // ARRAYJOIN({Delivery}) in Airtable formulas expands to display names, not
+  // record IDs — so FIND(recordId, ARRAYJOIN({Delivery})) never matches.
+  // Fetch recent stops and filter client-side using the Delivery field which
+  // returns actual record IDs in the API response.
+  const idSet = new Set(deliveryIds);
   const records = await airtableList<StopFields>("Delivery Stops", {
-    filterByFormula: formula,
+    filterByFormula: `IS_AFTER(CREATED_TIME(), DATEADD(TODAY(), -60, "days"))`,
     sort: [{ field: "Stop Number", direction: "asc" as const }],
+    maxRecords: "500",
   });
 
   const map = new Map<string, DeliveryStop[]>();
   for (const record of records) {
+    const deliveryRecId = record.fields["Delivery"]?.[0];
+    if (!deliveryRecId || !idSet.has(deliveryRecId)) continue;
     const stop = mapToStop(record);
-    const existing = map.get(stop.deliveryRecordId) ?? [];
+    const existing = map.get(deliveryRecId) ?? [];
     existing.push(stop);
-    map.set(stop.deliveryRecordId, existing);
+    map.set(deliveryRecId, existing);
   }
   return map;
 }

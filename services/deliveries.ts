@@ -24,6 +24,7 @@ interface DeliveryFields {
   "Delivery Date": string;
   "Pickup Time"?: string;
   "Delivery Time"?: string;
+  "Completed Date"?: string;
   Notes?: string;
   Distance?: number;
 }
@@ -200,6 +201,9 @@ export async function updateDeliveryStatus(
   const fields: Record<string, unknown> = { Status: status };
   if (extra?.pickupTime) fields["Pickup Time"] = extra.pickupTime;
   if (extra?.deliveryTime) fields["Delivery Time"] = extra.deliveryTime;
+  if (status === "Completed") {
+    fields["Completed Date"] = new Date().toISOString().split("T")[0];
+  }
   await airtableUpdate("Deliveries", id, fields);
 }
 
