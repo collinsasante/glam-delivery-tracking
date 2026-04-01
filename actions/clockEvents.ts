@@ -36,7 +36,7 @@ export async function clockInAction(
     return { success: true, timestamp: event.timestamp };
   } catch (err) {
     console.error("[clockInAction] error:", err);
-    return { error: "Failed to clock in. Please try again." };
+    return { error: err instanceof Error ? err.message : String(err) };
   }
 }
 
