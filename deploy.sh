@@ -17,6 +17,24 @@ cp -r .open-next/cloudflare      .open-next/assets/cloudflare
 cp -r .open-next/middleware      .open-next/assets/middleware
 cp    .open-next/worker.js       .open-next/assets/_worker.js
 
+# Tell Cloudflare Pages to serve _next/static/* and other static files
+# directly (bypass the worker). Without this, the worker intercepts them
+# and the Next.js handler returns a 404 HTML page for every JS/CSS chunk.
+cat > .open-next/assets/_routes.json << 'JSON'
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_next/static/*",
+    "/favicon.ico",
+    "/logo.png",
+    "/*.svg",
+    "/*.png",
+    "/firebase-messaging-sw.js"
+  ]
+}
+JSON
+
 echo "▶ Deploying to Cloudflare Pages..."
 cp wrangler.toml wrangler.toml.bak
 cat > wrangler.toml << 'TOML'
