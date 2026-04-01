@@ -24,10 +24,12 @@ export default async function PerformancePage({ searchParams }: Props) {
   const range = getDateRange(period, params.from, params.to);
 
   let rawData: RiderRawData[] = [];
+  let fetchError: string | null = null;
   try {
     rawData = await getPerformanceData(range);
   } catch (err) {
     console.error("[performance] getPerformanceData failed:", err);
+    fetchError = err instanceof Error ? err.message : String(err);
   }
   const { scores, summary } = computeFleetScores(rawData, range);
 
@@ -61,6 +63,11 @@ export default async function PerformancePage({ searchParams }: Props) {
       <PerformanceSummaryCards summary={summary} period={label} />
 
       {/* Ranking table */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-700 font-mono break-all">
+          Error: {fetchError}
+        </div>
+      )}
       {scores.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 px-4 text-center">
           <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-3 mx-auto">
