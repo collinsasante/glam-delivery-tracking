@@ -71,7 +71,7 @@ export async function startDeliveryAction(
     return { success: true };
   } catch (err) {
     console.error("startDelivery error:", err);
-    return { error: "Failed to start delivery." };
+    return { error: err instanceof Error ? err.message : String(err) };
   }
 }
 
