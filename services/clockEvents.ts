@@ -112,7 +112,7 @@ export async function createClockEvent(data: {
     }),
   };
   if (data.eventType === "Clock In" && data.gps) {
-    console.log("[clockEvent] Clock-in GPS (not saved — field not in Airtable):", data.gps.lat.toFixed(6), data.gps.lng.toFixed(6));
+    fields["Clock-in Location"] = `${data.gps.lat.toFixed(6)},${data.gps.lng.toFixed(6)}`;
   }
   const record = await airtableCreate<ClockEventFields>("Clock Events", fields);
   return mapToClockEvent(record);
