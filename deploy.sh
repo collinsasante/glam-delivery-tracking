@@ -28,8 +28,11 @@ cat > .open-next/assets/_routes.json << 'JSON'
     "/_next/static/*",
     "/favicon.ico",
     "/logo.png",
-    "/*.svg",
-    "/*.png",
+    "/file.svg",
+    "/globe.svg",
+    "/next.svg",
+    "/vercel.svg",
+    "/window.svg",
     "/firebase-messaging-sw.js"
   ]
 }
