@@ -46,18 +46,24 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
   function handle() {
     startTransition(async () => {
       let result;
-      if (isClockedIn) {
-        result = await clockOutAction();
-      } else {
-        // Capture GPS location for clock-in; proceed even if denied
-        const gps = await capture();
-        if (!gps) {
-          console.warn("[ClockIn] GPS unavailable or denied — clocking in without location");
-          toast("Location unavailable — clocking in without GPS", { icon: "⚠️" });
+      try {
+        if (isClockedIn) {
+          result = await clockOutAction();
         } else {
-          console.log("[ClockIn] GPS captured:", gps);
+          // Capture GPS location for clock-in; proceed even if denied
+          const gps = await capture();
+          if (!gps) {
+            console.warn("[ClockIn] GPS unavailable or denied — clocking in without location");
+            toast("Location unavailable — clocking in without GPS", { icon: "⚠️" });
+          } else {
+            console.log("[ClockIn] GPS captured:", gps);
+          }
+          result = await clockInAction(gps ?? undefined);
         }
-        result = await clockInAction(gps ?? undefined);
+      } catch (err) {
+        console.error("[ClockIn] action threw:", err);
+        toast.error("Clock in failed — please check your connection and try again.");
+        return;
       }
 
       if ("error" in result) {
