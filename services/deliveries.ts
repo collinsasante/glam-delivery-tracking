@@ -201,10 +201,17 @@ export async function updateDeliveryStatus(
   const fields: Record<string, unknown> = { Status: status };
   if (extra?.pickupTime) fields["Pickup Time"] = extra.pickupTime;
   if (extra?.deliveryTime) fields["Delivery Time"] = extra.deliveryTime;
-  if (status === "Completed") {
-    fields["Completed Date"] = new Date().toISOString().split("T")[0];
-  }
   await airtableUpdate("Deliveries", id, fields);
+  // Write Completed Date separately so a missing field never blocks the status update
+  if (status === "Completed") {
+    try {
+      await airtableUpdate("Deliveries", id, {
+        "Completed Date": new Date().toISOString().split("T")[0],
+      });
+    } catch {
+      // Completed Date field not yet added to Airtable — skip
+    }
+  }
 }
 
 export async function updateDelivery(

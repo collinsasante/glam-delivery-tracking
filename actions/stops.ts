@@ -138,6 +138,6 @@ export async function markArrivedAction(
     return { success: true };
   } catch (err) {
     console.error("markArrived error:", err);
-    return { error: "Failed to mark as arrived." };
+    return { error: err instanceof Error ? err.message : "Failed to mark as arrived." };
   }
 }
