@@ -57,18 +57,32 @@ export async function getPerformanceData(range: DateRange): Promise<RiderRawData
     photoUrl: r.fields["Photo URL"] ?? null,
   }));
 
-  // 2. All deliveries for the date range.
-  // Completed deliveries are matched by Completed Date (actual finish date).
-  // Pending/active deliveries are matched by Delivery Date (scheduled date).
-  // This ensures "today" shows deliveries ACTUALLY completed today, not just
-  // those scheduled for today.
-  const deliveryRecords = await airtableList<DeliveryFields>("Deliveries", {
-    filterByFormula: `OR(
-      AND({Status} = "Completed", {Completed Date} >= "${range.start}", {Completed Date} <= "${range.end}"),
-      AND({Status} != "Completed", {Delivery Date} >= "${range.start}", {Delivery Date} <= "${range.end}")
-    )`,
+  // 2. Fetch deliveries in range.
+  // Primary: all deliveries by Delivery Date (always works).
+  // Secondary: also try completed deliveries by Completed Date so "today"
+  //   reflects actual completion day. Falls back gracefully if the field
+  //   doesn't exist in Airtable yet.
+  const byDeliveryDate = await airtableList<DeliveryFields>("Deliveries", {
+    filterByFormula: `AND({Delivery Date} >= "${range.start}", {Delivery Date} <= "${range.end}")`,
     maxRecords: "500",
   });
+
+  let byCompletedDate: typeof byDeliveryDate = [];
+  try {
+    byCompletedDate = await airtableList<DeliveryFields>("Deliveries", {
+      filterByFormula: `AND({Status} = "Completed", {Completed Date} >= "${range.start}", {Completed Date} <= "${range.end}")`,
+      maxRecords: "500",
+    });
+  } catch {
+    // Completed Date field not yet added to Airtable — skip
+  }
+
+  // Merge, deduplicating by record ID
+  const seen = new Set(byDeliveryDate.map((r) => r.id));
+  const deliveryRecords = [
+    ...byDeliveryDate,
+    ...byCompletedDate.filter((r) => !seen.has(r.id)),
+  ];
   console.log(`[performance] deliveries in range: ${deliveryRecords.length}`, deliveryRecords.slice(0, 3).map(r => ({ id: r.id, date: r.fields["Delivery Date"], rider: r.fields["Assigned Rider"]?.[0], status: r.fields["Status"] })));
 
   const deliveryMeta = new Map<string, { riderId: string | null; date: string; distanceKm: number | null; deliveryStatus: string }>();
