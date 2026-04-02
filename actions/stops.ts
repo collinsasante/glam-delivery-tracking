@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { completeStop, startStop, createStop, getStopsForDelivery } from "@/services/stops";
-import { updateDeliveryStatus, getDeliveryById } from "@/services/deliveries";
+import { updateDeliveryStatus, getDeliveryById, getDeliveriesForRider } from "@/services/deliveries";
 import { getAdminRiders } from "@/services/riders";
 import { sendPushToTokens } from "@/lib/notifications";
 
@@ -21,6 +21,19 @@ export async function startDeliveryAction(
     const now = new Date();
     const delivery = await getDeliveryById(deliveryId);
     if (!delivery) return { error: "Delivery not found." };
+
+    // Enforce single-location rule: rider may run multiple simultaneous deliveries
+    // only when they all share the same warehouse (pickup location).
+    const riderId = session.user?.id;
+    if (riderId) {
+      const riderDeliveries = await getDeliveriesForRider(riderId);
+      const activeDeliveries = riderDeliveries.filter((d) => d.status === "In Progress");
+      if (activeDeliveries.length > 0 && activeDeliveries[0].warehouse !== delivery.warehouse) {
+        return {
+          error: `You already have an active delivery from ${activeDeliveries[0].warehouse}. Complete it before starting a delivery from a different location.`,
+        };
+      }
+    }
 
     // Calculate actual distance from rider's GPS to dropoff (if GPS available)
     let distanceKm: number | undefined = delivery.distance ?? undefined;
