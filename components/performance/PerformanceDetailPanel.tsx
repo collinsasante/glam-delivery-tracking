@@ -181,7 +181,7 @@ export function PerformanceDetailPanel({ score, open, onClose }: Props) {
                 {[...clockByDate.entries()].map(([date, events]) => (
                   <div key={date} className="border-b border-gray-50 last:border-0 pb-2 last:pb-0">
                     <p className="text-[10px] text-gray-400 mb-1">
-                      {new Date(date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}
+                      {date ? new Date(date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }) : "Unknown date"}
                     </p>
                     <div className="space-y-0.5 pl-2">
                       {events.map((e, i) => (
