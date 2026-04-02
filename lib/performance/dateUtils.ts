@@ -25,7 +25,8 @@ export function getDateRange(period: Period, customStart?: string, customEnd?: s
     return { start: customStart, end: customEnd };
   }
 
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const monthStart = new Date(now);
+  monthStart.setUTCDate(now.getUTCDate() - 29);
   return { start: monthStart.toISOString().split("T")[0], end: todayStr };
 }
 
@@ -45,7 +46,7 @@ export function formatPeriodLabel(period: Period): string {
   if (period === "weekly") return "This Week";
   if (period === "yearly") return "This Year";
   if (period === "custom") return "Custom";
-  return "This Month";
+  return "Last 30 Days";
 }
 
 export function formatDate(dateStr: string): string {
