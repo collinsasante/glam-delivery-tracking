@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Live Delivery Board · Glam Delivery",
+  title: "Live Delivery Board · Drop",
   description: "Real-time view of today's deliveries",
 };
 
@@ -36,9 +36,9 @@ export default async function BoardPage() {
       <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Glam Delivery" width={28} height={28} className="rounded-md shrink-0" />
+            <Image src="/logo.png" alt="Drop" width={28} height={28} className="rounded-md shrink-0" />
             <div>
-              <span className="font-semibold text-gray-900 text-sm">Glam Delivery</span>
+              <span className="font-semibold text-gray-900 text-sm">Drop</span>
               <span className="ml-2 text-xs text-gray-400">Live Board</span>
             </div>
           </div>

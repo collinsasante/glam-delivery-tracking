@@ -62,13 +62,13 @@ export default async function TrackingPage({ params }: Props) {
           <div className="flex items-center gap-2.5">
             <Image
               src="/logo.png"
-              alt="Glam Delivery"
+              alt="Drop"
               width={28}
               height={28}
               className="rounded-md shrink-0"
             />
             <span className="font-semibold text-gray-900 text-sm">
-              Glam Delivery
+              Drop
             </span>
           </div>
           <span

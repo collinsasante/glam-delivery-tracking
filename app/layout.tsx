@@ -3,8 +3,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: { default: "Glam Delivery", template: "%s — Glam Delivery" },
-  description: "Delivery management for Glam",
+  title: { default: "Drop", template: "%s — Drop" },
+  description: "Delivery management for Drop",
 };
 
 export default function RootLayout({

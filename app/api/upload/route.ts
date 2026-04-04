@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const upload = new FormData();
   upload.append("file", file);
   upload.append("upload_preset", UPLOAD_PRESET);
-  upload.append("folder", "glam-delivery/receipts");
+  upload.append("folder", "drop/receipts");
 
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
     method: "POST",

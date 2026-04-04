@@ -4,7 +4,10 @@
       "Bash(git add:*)",
       "Bash(ls /Users/breezyyy/Downloads/glam-delivery/app/\\\\\\(dashboard\\\\\\)/performance/)",
       "Bash(ls /Users/breezyyy/Downloads/glam-delivery/app/\\\\\\(dashboard\\\\\\)/)",
-      "Bash(ls /Users/breezyyy/Downloads/glam-delivery/app/\\\\\\(rider\\\\\\)/rider/)"
+      "Bash(ls /Users/breezyyy/Downloads/glam-delivery/app/\\\\\\(rider\\\\\\)/rider/)",
+      "Bash(find /Users/breezyyy/Downloads/glam-delivery/.open-next -name *.json)",
+      "Bash(find /Users/breezyyy/Downloads/glam-delivery -name firebase-client*)",
+      "Bash(grep -rn 'description.*Glam' /Users/breezyyy/Downloads/glam-delivery/*.ts /Users/breezyyy/Downloads/glam-delivery/*.js /Users/breezyyy/Downloads/glam-delivery/*.json)"
     ],
     "additionalDirectories": [
       "/Users/breezyyy/Downloads/glam-delivery/app/(rider)/rider/deliveries/[id]"

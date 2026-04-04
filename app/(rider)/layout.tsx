@@ -23,7 +23,7 @@ export default async function RiderLayout({
           <div className="flex items-center gap-2.5">
             <Image
               src="/logo.png"
-              alt="Glam Delivery"
+              alt="Drop"
               width={24}
               height={24}
               className="rounded-md shrink-0"

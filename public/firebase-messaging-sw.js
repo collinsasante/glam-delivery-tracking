@@ -12,7 +12,7 @@ if (configParam) {
     const messaging = firebase.messaging();
     messaging.onBackgroundMessage((payload) => {
       const { title, body } = payload.notification ?? {};
-      self.registration.showNotification(title ?? "Glam Delivery", {
+      self.registration.showNotification(title ?? "Drop", {
         body: body ?? "",
         icon: "/logo.png",
       });

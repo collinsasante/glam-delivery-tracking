@@ -97,8 +97,8 @@ export default function AuthLayout({
 
         {/* Logo */}
         <div className="flex items-center gap-2.5 relative">
-          <Image src="/logo.png" alt="Glam Delivery" width={32} height={32} className="rounded-lg" />
-          <span className="font-semibold text-base tracking-tight">Glam Delivery</span>
+          <Image src="/logo.png" alt="Drop" width={32} height={32} className="rounded-lg" />
+          <span className="font-semibold text-base tracking-tight">Drop</span>
         </div>
 
         {/* Quote */}
@@ -115,8 +115,8 @@ export default function AuthLayout({
       <div className="flex flex-col items-center justify-center px-6 py-12 bg-white">
         {/* Mobile logo */}
         <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-          <Image src="/logo.png" alt="Glam Delivery" width={32} height={32} className="rounded-lg" />
-          <span className="font-semibold text-base tracking-tight text-gray-900">Glam Delivery</span>
+          <Image src="/logo.png" alt="Drop" width={32} height={32} className="rounded-lg" />
+          <span className="font-semibold text-base tracking-tight text-gray-900">Drop</span>
         </div>
         <div className="w-full max-w-sm">
           {children}

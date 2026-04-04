@@ -38,13 +38,13 @@ export function AdminSidebar({ userName }: { userName: string }) {
         <div className="flex items-center gap-2.5">
           <Image
             src="/logo.png"
-            alt="Glam Delivery"
+            alt="Drop"
             width={26}
             height={26}
             className="rounded-md shrink-0"
           />
           <span className="text-white font-semibold text-sm tracking-tight">
-            Glam Delivery
+            Drop
           </span>
         </div>
       </div>
