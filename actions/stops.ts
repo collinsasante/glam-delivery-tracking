@@ -104,11 +104,16 @@ export async function markArrivedAction(
     const now = new Date();
 
     if (stopId) {
-      await completeStop(stopId, data);
+      try {
+        await completeStop(stopId, data);
+      } catch (stopErr) {
+        console.error("[markArrived] completeStop failed (non-fatal):", stopErr);
+        // Stop update failed (e.g. missing Airtable field) — continue to mark delivery completed
+      }
 
       // Check if all stops are completed
-      const stops = await getStopsForDelivery(deliveryId);
-      const allCompleted = stops.every((s) => s.id === stopId || s.status === "Completed");
+      const stops = await getStopsForDelivery(deliveryId).catch(() => []);
+      const allCompleted = stops.length === 0 || stops.every((s) => s.id === stopId || s.status === "Completed");
       if (!allCompleted) {
         revalidatePath("/rider");
         return { success: true };
