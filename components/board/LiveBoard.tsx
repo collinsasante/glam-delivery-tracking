@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MapPin, User, Package, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Delivery } from "@/types/delivery";
 import Link from "next/link";
@@ -18,31 +17,48 @@ interface BoardData {
   stats: Stats;
 }
 
-const statusConfig = {
-  Pending: {
-    dot: "bg-amber-400",
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
-    row: "border-l-amber-400",
-  },
-  "In Progress": {
-    dot: "bg-blue-400 animate-pulse",
-    pill: "bg-blue-50 text-blue-700 border-blue-200",
-    row: "border-l-blue-400",
-  },
-  Completed: {
-    dot: "bg-green-400",
-    pill: "bg-green-50 text-green-700 border-green-200",
-    row: "border-l-green-400",
-  },
-};
-
-const priorityConfig = {
-  Urgent: "bg-red-50 text-red-700 border-red-200",
-  Express: "bg-orange-50 text-orange-700 border-orange-200",
-  Normal: "bg-gray-50 text-gray-500 border-gray-200",
-};
-
 const REFRESH_INTERVAL = 30_000;
+
+const STATUS_DISPLAY: Record<string, { label: string; color: string; bg: string }> = {
+  "Pending":     { label: "SCHEDULED", color: "text-amber-400",  bg: "bg-amber-400/10" },
+  "In Progress": { label: "EN ROUTE",  color: "text-sky-400",    bg: "bg-sky-400/10"   },
+  "Completed":   { label: "DELIVERED", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+};
+
+const PRIORITY_COLOR: Record<string, string> = {
+  Urgent:  "text-red-400",
+  Express: "text-orange-400",
+  Normal:  "text-zinc-500",
+};
+
+
+function FlipCell({ value, className }: { value: string; className?: string }) {
+  const [display, setDisplay] = useState(value);
+  const [flipping, setFlipping] = useState(false);
+
+  useEffect(() => {
+    if (value !== display) {
+      setFlipping(true);
+      const t = setTimeout(() => {
+        setDisplay(value);
+        setFlipping(false);
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [value, display]);
+
+  return (
+    <span
+      className={cn(
+        "inline-block transition-all duration-300",
+        flipping && "opacity-0 scale-y-0",
+        className
+      )}
+    >
+      {display}
+    </span>
+  );
+}
 
 export function LiveBoard({ initial }: { initial: BoardData }) {
   const [data, setData] = useState<BoardData>(initial);
@@ -65,13 +81,11 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
     }
   }, []);
 
-  // Auto-refresh every 30s
   useEffect(() => {
     const timer = setInterval(refresh, REFRESH_INTERVAL);
     return () => clearInterval(timer);
   }, [refresh]);
 
-  // Countdown display
   useEffect(() => {
     const tick = setInterval(() => {
       setCountdown((c) => (c <= 1 ? REFRESH_INTERVAL / 1000 : c - 1));
@@ -81,137 +95,151 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
 
   const { deliveries, stats } = data;
 
+  const inProgress = deliveries.filter((d) => d.status === "In Progress");
+  const pending    = deliveries.filter((d) => d.status === "Pending");
+  const completed  = deliveries.filter((d) => d.status === "Completed");
+  const sorted     = [...inProgress, ...pending, ...completed];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Stats bar */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard label="Today's Deliveries" value={stats.total} color="text-gray-900" />
-          <StatCard label="In Progress" value={stats.inProgress} color="text-blue-600" dot="bg-blue-400 animate-pulse" />
-          <StatCard label="Pending" value={stats.pending} color="text-amber-600" dot="bg-amber-400" />
-          <StatCard label="Completed" value={stats.completed} color="text-green-600" dot="bg-green-400" />
+    <div className="min-h-screen bg-zinc-950 text-white font-mono">
+
+      {/* Ticker bar */}
+      <div className="bg-zinc-900 border-b border-zinc-800 overflow-hidden h-8 flex items-center">
+        <div className="shrink-0 bg-amber-500 text-black text-[10px] font-bold px-3 h-full flex items-center tracking-widest">
+          LIVE
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <div className="flex whitespace-nowrap animate-[ticker_40s_linear_infinite] text-[11px] text-zinc-400 tracking-wider">
+            {[0, 1].map((copy) => (
+              <span key={copy} className="flex shrink-0 px-6">
+                {sorted.map((d) => (
+                  <span key={d.id} className="mr-12">
+                    <span className="text-white">{d.deliveryId}</span>
+                    {" · "}
+                    <span>{d.customerName}</span>
+                    {" · "}
+                    <span className={STATUS_DISPLAY[d.status]?.color ?? "text-zinc-400"}>
+                      {STATUS_DISPLAY[d.status]?.label ?? d.status}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-900">
-              {deliveries.length === 0 ? "No deliveries today" : `${deliveries.length} deliveries`}
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Last updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </p>
+      {/* Stats row */}
+      <div className="border-b border-zinc-800 bg-zinc-900/60">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-zinc-500 tracking-widest uppercase">Total</span>
+            <span className="text-xl font-bold tabular-nums text-white">{stats.total}</span>
           </div>
-          <button
-            onClick={refresh}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-1.5 bg-white transition disabled:opacity-50"
-          >
-            <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
-            Refresh ({countdown}s)
-          </button>
+          <div className="w-px h-5 bg-zinc-700" />
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+            <span className="text-[10px] text-zinc-500 tracking-widest uppercase">En Route</span>
+            <span className="text-xl font-bold tabular-nums text-sky-400">{stats.inProgress}</span>
+          </div>
+          <div className="w-px h-5 bg-zinc-700" />
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span className="text-[10px] text-zinc-500 tracking-widest uppercase">Scheduled</span>
+            <span className="text-xl font-bold tabular-nums text-amber-400">{stats.pending}</span>
+          </div>
+          <div className="w-px h-5 bg-zinc-700" />
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-[10px] text-zinc-500 tracking-widest uppercase">Delivered</span>
+            <span className="text-xl font-bold tabular-nums text-emerald-400">{stats.completed}</span>
+          </div>
+          <div className="ml-auto flex items-center gap-3 text-[10px] text-zinc-500 tracking-wider">
+            <span>UPDATED {lastUpdated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}</span>
+            <button
+              onClick={refresh}
+              disabled={refreshing}
+              className="border border-zinc-700 rounded px-2 py-0.5 hover:border-zinc-500 hover:text-zinc-300 transition disabled:opacity-40"
+            >
+              {refreshing ? "···" : `↻ ${countdown}s`}
+            </button>
+          </div>
         </div>
+      </div>
 
-        {deliveries.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-            <Package className="h-10 w-10 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">No deliveries scheduled for today</p>
+      {/* Table header */}
+      <div className="max-w-7xl mx-auto px-6 pt-6">
+        <div className="grid grid-cols-[120px_1fr_180px_140px_120px_120px] gap-4 px-4 pb-2 border-b border-zinc-800 text-[10px] text-zinc-500 tracking-widest uppercase">
+          <span>Flight</span>
+          <span>Destination</span>
+          <span>Rider</span>
+          <span>Origin</span>
+          <span>Priority</span>
+          <span>Status</span>
+        </div>
+      </div>
+
+      {/* Rows */}
+      <div className="max-w-7xl mx-auto px-6 pb-10">
+        {sorted.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32 text-zinc-600">
+            <span className="text-5xl font-bold tracking-widest mb-4">- - -</span>
+            <p className="text-sm tracking-widest uppercase">No flights scheduled today</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {deliveries.map((d) => {
-              const sc = statusConfig[d.status] ?? statusConfig["Pending"];
-              const pc = priorityConfig[d.priority as keyof typeof priorityConfig] ?? priorityConfig.Normal;
+          <div className="divide-y divide-zinc-800/60">
+            {sorted.map((d, i) => {
+              const sc = STATUS_DISPLAY[d.status] ?? STATUS_DISPLAY["Pending"];
+              const pc = PRIORITY_COLOR[d.priority] ?? PRIORITY_COLOR.Normal;
+              const isActive = d.status === "In Progress";
               return (
                 <Link
                   key={d.id}
                   href={`/track/${d.deliveryId}`}
                   className={cn(
-                    "block bg-white rounded-xl border border-gray-100 border-l-4 shadow-sm p-4 hover:shadow-md transition group",
-                    sc.row
+                    "grid grid-cols-[120px_1fr_180px_140px_120px_120px] gap-4 px-4 py-3.5 text-sm transition-colors",
+                    isActive
+                      ? "bg-sky-950/30 hover:bg-sky-950/50"
+                      : "hover:bg-zinc-900/60",
+                    i % 2 === 0 && !isActive ? "bg-zinc-900/20" : ""
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      {/* Top row */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-semibold text-gray-500">
-                          {d.deliveryId}
-                        </span>
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border",
-                            sc.pill
-                          )}
-                        >
-                          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.dot)} />
-                          {d.status}
-                        </span>
-                        {d.priority !== "Normal" && (
-                          <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold border", pc)}>
-                            {d.priority}
-                          </span>
-                        )}
-                      </div>
+                  {/* Flight number */}
+                  <span className="font-bold text-white tracking-widest text-xs tabular-nums">
+                    <FlipCell value={d.deliveryId} />
+                  </span>
 
-                      {/* Customer */}
-                      <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate">
-                        {d.customerName}
-                        <span className="text-gray-400 font-normal ml-1.5">#{d.orderId}</span>
-                      </p>
+                  {/* Destination */}
+                  <span className="text-zinc-200 truncate text-xs leading-tight">
+                    <span className="block font-semibold truncate">{d.customerName}</span>
+                    <span className="text-zinc-500 text-[10px] truncate">{d.dropoffLocation}</span>
+                  </span>
 
-                      {/* Location + rider */}
-                      <div className="flex items-start gap-3 mt-1.5 flex-wrap">
-                        <span className="flex items-start gap-1 text-xs text-gray-500">
-                          <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0 text-gray-400" />
-                          <span className="leading-snug">{d.dropoffLocation}</span>
-                        </span>
-                        {d.assignedRiderName && (
-                          <span className="flex items-center gap-1 text-xs text-gray-500">
-                            <User className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                            {d.assignedRiderName}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                  {/* Rider */}
+                  <span className="text-zinc-300 text-xs truncate">
+                    {d.assignedRiderName ?? <span className="text-zinc-600">UNASSIGNED</span>}
+                  </span>
 
-                    {/* Warehouse + time */}
-                    <div className="text-right shrink-0 hidden sm:block">
-                      <p className="text-[10px] text-gray-400">{d.warehouse}</p>
-                      {d.deliveryDate && (
-                        <p className="text-xs text-gray-500 tabular-nums mt-0.5">{d.deliveryDate}</p>
-                      )}
-                    </div>
-                  </div>
+                  {/* Origin / warehouse */}
+                  <span className="text-zinc-400 text-xs truncate uppercase tracking-wide">
+                    {d.warehouse}
+                  </span>
+
+                  {/* Priority */}
+                  <span className={cn("text-xs font-semibold tracking-wider uppercase", pc)}>
+                    {d.priority}
+                  </span>
+
+                  {/* Status */}
+                  <span className={cn("inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase", sc.color)}>
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />}
+                    <FlipCell value={sc.label} />
+                  </span>
                 </Link>
               );
             })}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-  dot,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  dot?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      {dot && <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", dot)} />}
-      <div>
-        <p className={cn("text-2xl font-bold tabular-nums", color)}>{value}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{label}</p>
       </div>
     </div>
   );
