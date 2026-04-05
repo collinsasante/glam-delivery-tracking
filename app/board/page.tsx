@@ -32,7 +32,7 @@ export default async function BoardPage() {
   };
 
   return (
-    <div className="bg-zinc-950 min-h-screen">
+    <div className="bg-zinc-950 min-h-screen" style={{ zoom: 4 }}>
       {/* Header */}
       <header className="sticky top-0 z-30 bg-zinc-950 border-b border-zinc-800">
         <div className="w-full px-12 h-24 flex items-center justify-between">
