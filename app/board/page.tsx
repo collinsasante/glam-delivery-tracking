@@ -40,7 +40,7 @@ export default async function BoardPage() {
             <Image src="/logo.png" alt="Drop" width={28} height={28} className="rounded-md shrink-0" />
             <div className="flex items-center gap-3">
               <span className="font-bold text-white font-mono tracking-widest text-sm">DROP</span>
-              <span className="text-zinc-600 text-xs font-mono tracking-widest">DEPARTURES</span>
+              <span className="text-zinc-600 text-xs font-mono tracking-widest">DELIVERIES</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
