@@ -19,7 +19,7 @@ export function Clock() {
     return () => clearInterval(id);
   }, []);
   return (
-    <span className="font-mono tabular-nums text-white text-base tracking-widest">
+    <span className="font-mono tabular-nums text-white text-3xl tracking-widest">
       {time}
     </span>
   );
