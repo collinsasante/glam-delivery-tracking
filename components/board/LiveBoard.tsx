@@ -96,7 +96,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
   const tickerItems = [...inProgress, ...pending, ...deliveries.filter((d) => d.status === "Completed")];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white font-mono" style={{ zoom: 4 }}>
+    <div className="min-h-screen bg-zinc-950 text-white font-mono">
 
       {/* Ticker */}
       <div className="bg-zinc-900 border-b border-zinc-800 overflow-hidden h-20 flex items-center">
