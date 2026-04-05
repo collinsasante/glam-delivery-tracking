@@ -20,10 +20,10 @@ interface BoardData {
 const REFRESH_INTERVAL = 30_000;
 const COMPLETED_HIDE_MINS = 30;
 
-const STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
-  "Pending":     { label: "SCHEDULED", color: "text-amber-400"   },
-  "In Progress": { label: "EN ROUTE",  color: "text-sky-400"     },
-  "Completed":   { label: "DELIVERED", color: "text-emerald-400" },
+const STATUS_DISPLAY: Record<string, { label: string; dot: string; pill: string; color: string }> = {
+  "Pending":     { label: "Pending",     dot: "bg-amber-400",  pill: "bg-amber-400/15 text-amber-300 border border-amber-500/40",  color: "text-amber-400"   },
+  "In Progress": { label: "In Progress", dot: "bg-blue-400 animate-pulse",   pill: "bg-blue-400/15 text-blue-300 border border-blue-500/40",   color: "text-blue-400"    },
+  "Completed":   { label: "Completed",   dot: "bg-emerald-400", pill: "bg-emerald-400/15 text-emerald-300 border border-emerald-500/40", color: "text-emerald-400" },
 };
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -119,12 +119,12 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
     <div className="min-h-screen bg-zinc-950 text-white font-mono">
 
       {/* Ticker */}
-      <div className="bg-zinc-900 border-b border-zinc-800 overflow-hidden h-10 flex items-center">
-        <div className="shrink-0 bg-amber-500 text-black text-xs font-bold px-4 h-full flex items-center tracking-widest">
+      <div className="bg-zinc-900 border-b border-zinc-800 overflow-hidden h-12 flex items-center">
+        <div className="shrink-0 bg-amber-500 text-black text-sm font-bold px-5 h-full flex items-center tracking-widest">
           LIVE
         </div>
         <div className="flex-1 overflow-hidden">
-          <div className="flex whitespace-nowrap animate-[ticker_40s_linear_infinite] text-sm text-zinc-400 tracking-wider">
+          <div className="flex whitespace-nowrap animate-[ticker_40s_linear_infinite] text-base text-zinc-400 tracking-wider">
             {[0, 1].map((copy) => (
               <span key={copy} className="flex shrink-0 px-8">
                 {tickerItems.map((d) => (
@@ -146,35 +146,35 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
 
       {/* Stats bar */}
       <div className="border-b border-zinc-800 bg-zinc-900/60">
-        <div className="max-w-[1600px] mx-auto px-8 py-4 flex items-center gap-10">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-500 tracking-widest uppercase">Total</span>
-            <span className="text-3xl font-bold tabular-nums text-white">{stats.total}</span>
+        <div className="max-w-[1600px] mx-auto px-8 py-5 flex items-center gap-12">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-zinc-500 tracking-widest uppercase">Total</span>
+            <span className="text-5xl font-bold tabular-nums text-white">{stats.total}</span>
           </div>
-          <div className="w-px h-7 bg-zinc-700" />
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse" />
-            <span className="text-xs text-zinc-500 tracking-widest uppercase">En Route</span>
-            <span className="text-3xl font-bold tabular-nums text-sky-400">{stats.inProgress}</span>
+          <div className="w-px h-10 bg-zinc-700" />
+          <div className="flex items-center gap-4">
+            <span className="w-3 h-3 rounded-full bg-blue-400 animate-pulse" />
+            <span className="text-sm text-zinc-500 tracking-widest uppercase">In Progress</span>
+            <span className="text-5xl font-bold tabular-nums text-blue-400">{stats.inProgress}</span>
           </div>
-          <div className="w-px h-7 bg-zinc-700" />
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <span className="text-xs text-zinc-500 tracking-widest uppercase">Scheduled</span>
-            <span className="text-3xl font-bold tabular-nums text-amber-400">{stats.pending}</span>
+          <div className="w-px h-10 bg-zinc-700" />
+          <div className="flex items-center gap-4">
+            <span className="w-3 h-3 rounded-full bg-amber-400" />
+            <span className="text-sm text-zinc-500 tracking-widest uppercase">Pending</span>
+            <span className="text-5xl font-bold tabular-nums text-amber-400">{stats.pending}</span>
           </div>
-          <div className="w-px h-7 bg-zinc-700" />
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-            <span className="text-xs text-zinc-500 tracking-widest uppercase">Delivered</span>
-            <span className="text-3xl font-bold tabular-nums text-emerald-400">{stats.completed}</span>
+          <div className="w-px h-10 bg-zinc-700" />
+          <div className="flex items-center gap-4">
+            <span className="w-3 h-3 rounded-full bg-emerald-400" />
+            <span className="text-sm text-zinc-500 tracking-widest uppercase">Completed</span>
+            <span className="text-5xl font-bold tabular-nums text-emerald-400">{stats.completed}</span>
           </div>
-          <div className="ml-auto flex items-center gap-4 text-xs text-zinc-500 tracking-wider">
+          <div className="ml-auto flex items-center gap-5 text-sm text-zinc-500 tracking-wider">
             <span>UPDATED {now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}</span>
             <button
               onClick={refresh}
               disabled={refreshing}
-              className="border border-zinc-700 rounded px-3 py-1 hover:border-zinc-500 hover:text-zinc-300 transition disabled:opacity-40"
+              className="border border-zinc-700 rounded px-4 py-1.5 hover:border-zinc-500 hover:text-zinc-300 transition disabled:opacity-40"
             >
               {refreshing ? "···" : `↻ ${countdown}s`}
             </button>
@@ -186,7 +186,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
       <div className="max-w-[1600px] mx-auto px-8 pt-8 pb-12">
 
         {/* Column headers — match admin table */}
-        <div className="grid grid-cols-[160px_1fr_1.4fr_180px_120px_110px_110px_90px_160px] gap-6 px-6 pb-3 border-b border-zinc-800 text-xs text-zinc-500 tracking-widest uppercase">
+        <div className="grid grid-cols-[180px_1fr_1.4fr_200px_130px_120px_120px_100px_180px] gap-6 px-6 pb-4 border-b border-zinc-800 text-sm text-zinc-500 tracking-widest uppercase">
           <span>ID</span>
           <span>Customer</span>
           <span>Dropoff</span>
@@ -200,8 +200,8 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
 
         {sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 text-zinc-600">
-            <span className="text-6xl font-bold tracking-widest mb-4">- - -</span>
-            <p className="text-base tracking-widest uppercase">No deliveries scheduled today</p>
+            <span className="text-8xl font-bold tracking-widest mb-6">- - -</span>
+            <p className="text-xl tracking-widest uppercase">No deliveries scheduled today</p>
           </div>
         ) : (
           <div className="divide-y divide-zinc-800/50">
@@ -214,7 +214,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                   key={d.id}
                   href={`/track/${d.deliveryId}`}
                   className={cn(
-                    "grid grid-cols-[160px_1fr_1.4fr_180px_120px_110px_110px_90px_160px] gap-6 px-6 py-5 text-base transition-colors",
+                    "grid grid-cols-[180px_1fr_1.4fr_200px_130px_120px_120px_100px_180px] gap-6 px-6 py-6 text-lg transition-colors",
                     isActive ? "bg-sky-950/30 hover:bg-sky-950/50" : "hover:bg-zinc-900/50",
                     i % 2 === 0 && !isActive ? "bg-zinc-900/20" : ""
                   )}
@@ -228,7 +228,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                   <span className="min-w-0">
                     <span className="block font-semibold text-white truncate">{d.customerName}</span>
                     {d.customerPhone && (
-                      <span className="block text-sm text-zinc-500 mt-0.5">{d.customerPhone}</span>
+                      <span className="block text-base text-zinc-500 mt-0.5">{d.customerPhone}</span>
                     )}
                   </span>
 
@@ -255,8 +255,8 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                   </span>
 
                   {/* Status */}
-                  <span className={cn("inline-flex items-center gap-2 font-bold tracking-widest uppercase self-center", sc.color)}>
-                    {isActive && <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse shrink-0" />}
+                  <span className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold self-center", sc.pill)}>
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", sc.dot)} />
                     <FlipCell value={sc.label} />
                   </span>
                 </Link>
