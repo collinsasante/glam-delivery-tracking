@@ -204,12 +204,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                   </span>
 
                   {/* Customer */}
-                  <span className="min-w-0 self-center">
-                    <span className="block font-semibold text-white truncate">{d.customerName}</span>
-                    {d.customerPhone && (
-                      <span className="block text-xl text-zinc-500 mt-1">{d.customerPhone}</span>
-                    )}
-                  </span>
+                  <span className="font-semibold text-white truncate self-center">{d.customerName}</span>
 
                   {/* Dropoff */}
                   <span className="text-zinc-300 truncate self-center">{d.dropoffLocation}</span>
