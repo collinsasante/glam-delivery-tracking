@@ -19,7 +19,7 @@ export function Clock() {
     return () => clearInterval(id);
   }, []);
   return (
-    <span className="font-mono tabular-nums text-white text-3xl tracking-widest">
+    <span className="font-mono tabular-nums text-white tracking-widest" style={{ fontSize: "clamp(0.8rem, 2vw, 2.5rem)" }}>
       {time}
     </span>
   );
