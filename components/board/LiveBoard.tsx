@@ -207,7 +207,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                   }}
                 >
                   <span className="font-semibold text-white truncate">{d.customerName}</span>
-                  <span className="text-zinc-300 truncate">{d.dropoffLocation}</span>
+                  <span className="text-zinc-300 leading-snug">{d.dropoffLocation}</span>
                   <span className="text-zinc-300 truncate">
                     {d.assignedRiderName ?? <span className="text-zinc-600">UNASSIGNED</span>}
                   </span>
