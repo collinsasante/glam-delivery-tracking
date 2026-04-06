@@ -169,18 +169,15 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
         <div
           className="grid w-full gap-x-[1vw] px-[1vw] pb-[0.8vw] border-b border-zinc-800 text-zinc-500 tracking-widest uppercase"
           style={{
-            gridTemplateColumns: "11fr 14fr 18fr 14fr 10fr 10fr 10fr 8fr 14fr",
+            gridTemplateColumns: "18fr 22fr 18fr 14fr 14fr 16fr",
             fontSize: s.colHead,
           }}
         >
-          <span>ID</span>
           <span>Customer</span>
           <span>Dropoff</span>
           <span>Rider</span>
-          <span>Date</span>
           <span>Pickup</span>
           <span>Delivered</span>
-          <span>Dist.</span>
           <span>Status</span>
         </div>
 
@@ -205,24 +202,17 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                     i % 2 === 0 && !isActive ? "bg-zinc-900/20" : ""
                   )}
                   style={{
-                    gridTemplateColumns: "11fr 14fr 18fr 14fr 10fr 10fr 10fr 8fr 14fr",
+                    gridTemplateColumns: "18fr 22fr 18fr 14fr 14fr 16fr",
                     fontSize: s.row,
                   }}
                 >
-                  <span className="font-bold text-white tracking-widest tabular-nums truncate">
-                    <FlipCell value={d.deliveryId} />
-                  </span>
                   <span className="font-semibold text-white truncate">{d.customerName}</span>
                   <span className="text-zinc-300 truncate">{d.dropoffLocation}</span>
                   <span className="text-zinc-300 truncate">
                     {d.assignedRiderName ?? <span className="text-zinc-600">UNASSIGNED</span>}
                   </span>
-                  <span className="text-zinc-400 tabular-nums truncate">{d.deliveryDate}</span>
                   <span className="text-zinc-400 tabular-nums">{fmt12(d.pickupTime)}</span>
                   <span className="text-zinc-400 tabular-nums">{fmt12(d.deliveryTime)}</span>
-                  <span className={cn("tabular-nums", pc)}>
-                    {d.distance != null ? `${d.distance} km` : "—"}
-                  </span>
                   <span
                     className={cn("inline-flex items-center gap-[0.4vw] rounded-full font-semibold whitespace-nowrap", sc.pill)}
                     style={{ fontSize: s.pill, padding: "0.3vw 0.8vw" }}
