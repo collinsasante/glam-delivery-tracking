@@ -16,7 +16,8 @@ const vehicleIcons = {
 };
 
 export default async function RidersPage() {
-  const riders = await getRiders();
+  const all = await getRiders();
+  const riders = all.filter((r) => r.role === "Rider");
   const active = riders.filter((r) => r.active).length;
 
   return (
