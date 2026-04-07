@@ -12,6 +12,7 @@ import {
   getRiderByEmail,
   getRiderById,
 } from "@/services/riders";
+import { sendInviteEmail } from "@/lib/email";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -34,20 +35,32 @@ export async function createRiderAction(data: unknown): Promise<ActionResult> {
     return { error: firstError ?? "Invalid form data" };
   }
 
-  const { name, email, phone, password, role, vehicleType, active } = parsed.data;
+  const { name, email, phone, role, vehicleType, active } = parsed.data;
 
   try {
     const existing = await getRiderByEmail(email);
-    if (existing) return { error: "A rider with that email already exists" };
+    if (existing) return { error: "A user with that email already exists" };
 
-    await adminAuth.createUser({ email, password, displayName: name });
+    // Create Firebase user with a random temp password
+    const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase();
+    await adminAuth.createUser({ email, password: tempPassword, displayName: name });
+
+    // Generate a password reset / set-password link
+    const inviteLink = await adminAuth.generatePasswordResetLink(email);
+
     await createRider({ name, email, phone, role, vehicleType, active });
 
-    revalidatePath("/dashboard/riders");
+    // Send invite email (non-fatal if email service not configured)
+    await sendInviteEmail({ to: email, name, role, inviteLink }).catch((e) =>
+      console.error("[invite] email failed:", e)
+    );
+
+    revalidatePath("/riders");
+    revalidatePath("/staff");
     return { success: true };
   } catch (err) {
     console.error("createRider error:", err);
-    return { error: "Failed to create rider." };
+    return { error: "Failed to create account." };
   }
 }
 

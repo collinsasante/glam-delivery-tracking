@@ -4,7 +4,6 @@ import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase-client";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 export function SignInForm() {
@@ -116,12 +115,6 @@ export function SignInForm() {
       </button>
 
 
-      <p className="text-center text-sm text-gray-500">
-        Not a rider yet?{" "}
-        <Link href="/signup" className="text-red-800 hover:text-red-700 font-medium transition">
-          Create account
-        </Link>
-      </p>
     </form>
   );
 }

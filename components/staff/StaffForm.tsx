@@ -13,42 +13,34 @@ const safeResolver = zodResolver(createRiderSchema) as any;
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Mail } from "lucide-react";
 
 type FormData = z.infer<typeof createRiderSchema>;
 
-export function RiderForm() {
+export function StaffForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: safeResolver,
-    defaultValues: { role: "Rider", active: true },
+    defaultValues: { role: "Admin", active: true },
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function onSubmit(data: any) {
     startTransition(async () => {
-      const result = await createRiderAction(data);
+      const result = await createRiderAction({ ...data, role: "Admin" });
       if ("error" in result) {
         toast.error(result.error);
       } else {
-        toast.success("Rider created — invite email sent");
-        router.push("/riders");
+        toast.success("Staff member created — invite email sent");
+        router.push("/staff");
       }
     });
   }
@@ -62,12 +54,10 @@ export function RiderForm() {
             <Input
               id="name"
               {...register("name")}
-              placeholder="Rider name"
+              placeholder="Staff member name"
               className={errors.name ? "border-red-400" : ""}
             />
-            {errors.name && (
-              <p className="text-xs text-red-500">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -76,12 +66,10 @@ export function RiderForm() {
               id="email"
               type="email"
               {...register("email")}
-              placeholder="rider@example.com"
+              placeholder="staff@example.com"
               className={errors.email ? "border-red-400" : ""}
             />
-            {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -89,48 +77,20 @@ export function RiderForm() {
             <Input id="phone" type="tel" {...register("phone")} placeholder="+233…" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Vehicle</Label>
-              <Select
-                onValueChange={(v) =>
-                  setValue("vehicleType", v as FormData["vehicleType"])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="motor">Motorbike</SelectItem>
-                  <SelectItem value="car">Car</SelectItem>
-                  <SelectItem value="bike">Bicycle</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5 flex items-start gap-2.5">
             <Mail className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
             <p className="text-xs text-blue-700">
-              An invite email will be sent to the rider with a link to set their password.
+              An invite email will be sent with a link to set their password. They will have Admin access.
             </p>
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-3 mt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/riders")}
-        >
+        <Button type="button" variant="outline" onClick={() => router.push("/staff")}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          className="bg-red-800 hover:bg-red-900"
-          disabled={isPending}
-        >
+        <Button type="submit" className="bg-red-800 hover:bg-red-900" disabled={isPending}>
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

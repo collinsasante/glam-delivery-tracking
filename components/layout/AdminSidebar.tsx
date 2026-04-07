@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Truck,
   Users,
+  UserCog,
   BarChart3,
   Receipt,
   LogOut,
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/deliveries", label: "Deliveries", icon: Truck },
   { href: "/riders", label: "Riders", icon: Users },
+  { href: "/staff", label: "Staff", icon: UserCog },
   { href: "/performance", label: "Performance", icon: BarChart3 },
   { href: "/expenses", label: "Expenses", icon: Receipt },
 ];
