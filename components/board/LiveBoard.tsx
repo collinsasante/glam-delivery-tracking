@@ -19,6 +19,8 @@ interface BoardData {
 
 const REFRESH_INTERVAL = 30_000;
 const COMPLETED_HIDE_MINS = 30;
+const PAGE_SIZE = 8;
+const PAGE_INTERVAL = 15_000;
 
 const STATUS_DISPLAY: Record<string, { label: string; dot: string; pill: string; color: string }> = {
   "Pending":     { label: "Pending",     dot: "bg-amber-400",              pill: "bg-amber-400/15 text-amber-300 border border-amber-500/40",      color: "text-amber-400"   },
@@ -70,6 +72,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
   const [now, setNow] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
   const [countdown, setCountdown] = useState(REFRESH_INTERVAL / 1000);
+  const [page, setPage] = useState(0);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -93,6 +96,21 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
   const pending     = deliveries.filter((d) => d.status === "Pending");
   const completed   = deliveries.filter((d) => d.status === "Completed" && shouldShow(d, now));
   const sorted      = [...inProgress, ...pending, ...completed];
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+
+  useEffect(() => {
+    if (sorted.length <= PAGE_SIZE) return;
+    const t = setInterval(() => {
+      setPage((p) => (p + 1) % totalPages);
+    }, PAGE_INTERVAL);
+    return () => clearInterval(t);
+  }, [sorted.length, totalPages]);
+
+  // Reset to page 0 when data refreshes
+  useEffect(() => { setPage(0); }, [deliveries.length]);
+
+  const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const tickerItems = [...inProgress, ...pending, ...deliveries.filter((d) => d.status === "Completed")];
 
   // fluid font size: scales from small screens up to large TVs
@@ -151,6 +169,11 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
             </div>
           ))}
           <div className="ml-auto flex items-center gap-[2vw] text-zinc-500 tracking-wider" style={{ fontSize: s.label }}>
+            {totalPages > 1 && (
+              <span className="text-zinc-400">
+                PAGE {page + 1} / {totalPages}
+              </span>
+            )}
             <span>UPDATED {now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}</span>
             <button
               onClick={refresh}
@@ -188,7 +211,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
           </div>
         ) : (
           <div className="divide-y divide-zinc-800/50">
-            {sorted.map((d, i) => {
+            {paginated.map((d, i) => {
               const sc = STATUS_DISPLAY[d.status] ?? STATUS_DISPLAY["Pending"];
               const pc = PRIORITY_COLOR[d.priority] ?? PRIORITY_COLOR.Normal;
               const isActive = d.status === "In Progress";

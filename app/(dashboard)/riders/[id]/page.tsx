@@ -7,6 +7,7 @@ import { ChevronLeft, Mail, Phone, Truck, Calendar, Package, Clock } from "lucid
 import { getRiderById } from "@/services/riders";
 import { getDeliveries } from "@/services/deliveries";
 import { getTodayClockEvents } from "@/services/clockEvents";
+import { RiderActions } from "@/components/riders/RiderActions";
 
 export const metadata: Metadata = { title: "Rider Profile" };
 
@@ -64,6 +65,7 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
             )}
           </div>
           <div className="flex-1 min-w-0">
+
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-semibold text-gray-900">
                 {rider.name}
@@ -114,6 +116,21 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
                   <span>Joined {rider.joinedDate}</span>
                 </div>
               )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-50">
+              <RiderActions
+                id={id}
+                backPath="/riders"
+                rider={{
+                  name: rider.name,
+                  email: rider.email,
+                  phone: rider.phone ?? undefined,
+                  role: rider.role as "Rider" | "Admin",
+                  vehicleType: rider.vehicleType ?? undefined,
+                  active: rider.active,
+                }}
+              />
             </div>
           </div>
         </div>

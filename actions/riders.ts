@@ -96,8 +96,9 @@ export async function updateRiderAction(
     }
 
     await updateRider(id, updates);
-    revalidatePath("/dashboard/riders");
-    revalidatePath(`/dashboard/riders/${id}`);
+    revalidatePath("/riders");
+    revalidatePath(`/riders/${id}`);
+    revalidatePath("/staff");
     return { success: true };
   } catch (err) {
     console.error("updateRider error:", err);
@@ -115,7 +116,8 @@ export async function deleteRiderAction(id: string): Promise<ActionResult> {
       if (fbUser) await adminAuth.deleteUser(fbUser.uid);
     }
     await deleteRider(id);
-    revalidatePath("/dashboard/riders");
+    revalidatePath("/riders");
+    revalidatePath("/staff");
     return { success: true };
   } catch (err) {
     console.error("deleteRider error:", err);
