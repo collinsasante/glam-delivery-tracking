@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { Delivery } from "@/types/delivery";
 import Link from "next/link";
@@ -62,7 +62,7 @@ function FlipCell({ value }: { value: string }) {
   );
 }
 
-export function LiveBoard({ initial }: { initial: BoardData }) {
+export function LiveBoard({ initial, header }: { initial: BoardData; header?: ReactNode }) {
   const [data, setData] = useState<BoardData>(initial);
   const [now, setNow] = useState<Date | null>(null); // null until mounted — avoids hydration mismatch
   const [refreshing, setRefreshing] = useState(false);
@@ -132,6 +132,13 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
 
   return (
     <div className="h-screen bg-zinc-950 text-white font-mono flex flex-col overflow-hidden">
+
+      {/* Header */}
+      {header && (
+        <header className="shrink-0 border-b border-zinc-800 bg-zinc-950">
+          {header}
+        </header>
+      )}
 
       {/* Ticker */}
       <div className="bg-zinc-900 border-b border-zinc-800 overflow-hidden flex items-center shrink-0" style={{ height: "clamp(2rem, 4vw, 5rem)" }}>

@@ -32,9 +32,9 @@ export default async function BoardPage() {
   };
 
   return (
-    <div className="bg-zinc-950 min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-zinc-950 border-b border-zinc-800">
+    <LiveBoard
+      initial={{ deliveries: enriched, stats }}
+      header={
         <div className="w-full flex items-center justify-between" style={{ padding: "1vw 2vw", height: "clamp(3rem, 6vw, 7rem)" }}>
           <div className="flex items-center" style={{ gap: "1.5vw" }}>
             <Image src="/logo.png" alt="Drop" width={48} height={48} className="rounded-xl shrink-0" style={{ width: "clamp(28px, 4vw, 56px)", height: "clamp(28px, 4vw, 56px)" }} />
@@ -49,9 +49,7 @@ export default async function BoardPage() {
             <Clock />
           </div>
         </div>
-      </header>
-
-      <LiveBoard initial={{ deliveries: enriched, stats }} />
-    </div>
+      }
+    />
   );
 }
