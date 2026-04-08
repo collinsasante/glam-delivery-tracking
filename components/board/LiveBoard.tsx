@@ -19,7 +19,7 @@ interface BoardData {
 
 const REFRESH_INTERVAL = 30_000;
 const COMPLETED_HIDE_MINS = 30;
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 7;
 const PAGE_INTERVAL = 15_000;
 const FADE_MS = 350;
 
@@ -232,7 +232,7 @@ export function LiveBoard({ initial, header }: { initial: BoardData; header?: Re
               <p className="tracking-widest uppercase" style={{ fontSize: "clamp(0.8rem, 2vw, 2rem)" }}>No deliveries</p>
             </div>
           ) : (
-            <div className="h-full flex flex-col divide-y divide-zinc-800/50">
+            <div className="divide-y divide-zinc-800/50">
               {paginated.map((d, i) => {
                 const sc = STATUS_DISPLAY[d.status] ?? STATUS_DISPLAY["Pending"];
                 const isActive = d.status === "In Progress";
@@ -241,7 +241,7 @@ export function LiveBoard({ initial, header }: { initial: BoardData; header?: Re
                     key={d.id}
                     href={`/track/${d.deliveryId}`}
                     className={cn(
-                      "grid w-full gap-x-[1vw] px-[1vw] transition-colors items-center flex-1",
+                      "grid w-full gap-x-[1vw] px-[1vw] py-[1.2vw] transition-colors items-center",
                       isActive ? "bg-sky-950/30 hover:bg-sky-950/50" : "hover:bg-zinc-900/50",
                       i % 2 === 0 && !isActive ? "bg-zinc-900/20" : ""
                     )}
