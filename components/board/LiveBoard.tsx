@@ -31,7 +31,7 @@ const STATUS_DISPLAY: Record<string, { label: string; dot: string; pill: string;
 
 function shouldShow(d: Delivery, now: Date): boolean {
   if (d.status !== "Completed") return true;
-  if (!d.deliveryTime) return false;
+  if (!d.deliveryTime) return true; // no time recorded — keep showing it
   const [h, m] = d.deliveryTime.split(":").map(Number);
   const completedAt = new Date(now);
   completedAt.setHours(h, m, 0, 0);
