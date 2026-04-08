@@ -64,7 +64,7 @@ function FlipCell({ value }: { value: string }) {
 
 export function LiveBoard({ initial }: { initial: BoardData }) {
   const [data, setData] = useState<BoardData>(initial);
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState<Date | null>(null); // null until mounted — avoids hydration mismatch
   const [refreshing, setRefreshing] = useState(false);
   const [countdown, setCountdown] = useState(REFRESH_INTERVAL / 1000);
   const [page, setPage] = useState(0);
@@ -80,7 +80,9 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
   }, []);
 
   useEffect(() => { const t = setInterval(refresh, REFRESH_INTERVAL); return () => clearInterval(t); }, [refresh]);
+  // Initialise clock on mount, then tick every second
   useEffect(() => {
+    setNow(new Date());
     const t = setInterval(() => {
       setNow(new Date());
       setCountdown((c) => (c <= 1 ? REFRESH_INTERVAL / 1000 : c - 1));
@@ -91,7 +93,8 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
   const { deliveries, stats } = data;
   const inProgress  = deliveries.filter((d) => d.status === "In Progress");
   const pending     = deliveries.filter((d) => d.status === "Pending");
-  const completed   = deliveries.filter((d) => d.status === "Completed" && shouldShow(d, now));
+  // Before mount (now === null) show all completed; after mount apply the 30-min rule
+  const completed   = deliveries.filter((d) => d.status === "Completed" && (now === null || shouldShow(d, now)));
   const sorted      = [...inProgress, ...pending, ...completed];
   const totalPages  = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
 
@@ -178,7 +181,7 @@ export function LiveBoard({ initial }: { initial: BoardData }) {
                 {page + 1} / {totalPages}
               </span>
             )}
-            <span>UPDATED {now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}</span>
+            <span>UPDATED {now ? now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) : "--:--:--"}</span>
             <button
               onClick={refresh}
               disabled={refreshing}
