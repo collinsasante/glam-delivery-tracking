@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default async function BoardPage() {
   const [deliveries, riders] = await Promise.all([
-    getDeliveries({ date: "today" }),
+    getDeliveries({}),
     getRiders(),
   ]);
 

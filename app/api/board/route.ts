@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const [deliveries, riders] = await Promise.all([
-    getDeliveries({ date: "today" }),
+    getDeliveries({}),
     getRiders(),
   ]);
 
