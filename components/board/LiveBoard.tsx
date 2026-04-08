@@ -19,7 +19,7 @@ interface BoardData {
 
 const REFRESH_INTERVAL = 30_000;
 const COMPLETED_HIDE_MINS = 30;
-const PAGE_SIZE = 7;
+const PAGE_SIZE = 4;
 const PAGE_INTERVAL = 15_000;
 const FADE_MS = 350;
 
