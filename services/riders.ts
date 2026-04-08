@@ -31,7 +31,7 @@ function mapToRider(record: { id: string; fields: RiderFields }): Rider {
     email: f["Email"] ?? "",
     phone: f["Phone"] ?? "",
     role: (f["Role"] as Rider["role"]) ?? "Rider",
-    vehicleType: (f["Vehicle Type"] as Rider["vehicleType"]) ?? null,
+    vehicleType: (f["Vehicle Type"] as Rider["vehicleType"]) || null,
     active: f["Active"] ?? true,
     joinedDate: f["Joined Date"] ?? "",
     photoUrl: f["Photo URL"] ?? null,

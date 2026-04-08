@@ -33,7 +33,7 @@ export function RiderActions({ id, backPath, rider }: RiderActionsProps) {
         email: rider.email,
         phone: rider.phone,
         role: rider.role,
-        vehicleType: rider.vehicleType as "motor" | "car" | "bike" | undefined,
+        vehicleType: (rider.vehicleType || undefined) as "motor" | "car" | "bike" | undefined,
         active: !rider.active,
         password: "",
       });
