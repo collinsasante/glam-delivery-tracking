@@ -18,6 +18,7 @@ import { auth } from "@/auth";
 import { getDeliveryById } from "@/services/deliveries";
 import { getStopsForDelivery } from "@/services/stops";
 import { cn } from "@/lib/utils";
+import { DeliveryCommentForm } from "@/components/riders/DeliveryCommentForm";
 
 export const metadata: Metadata = { title: "Delivery Details" };
 
@@ -223,6 +224,12 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
           <p className="text-sm text-gray-600 leading-relaxed">{delivery.notes}</p>
         </div>
       )}
+
+      {/* Rider comment */}
+      <DeliveryCommentForm
+        deliveryId={delivery.id}
+        existingComment={delivery.riderComment}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { completeStop, startStop, createStop, getStopsForDelivery } from "@/services/stops";
-import { updateDeliveryStatus, getDeliveryById, getDeliveriesForRider } from "@/services/deliveries";
+import { updateDeliveryStatus, getDeliveryById, getDeliveriesForRider, updateDelivery } from "@/services/deliveries";
 import { getAdminRiders } from "@/services/riders";
 import { sendPushToTokens } from "@/lib/notifications";
 
@@ -144,5 +144,25 @@ export async function markArrivedAction(
   } catch (err) {
     console.error("markArrived error:", err);
     return { error: err instanceof Error ? err.message : "Failed to mark as arrived." };
+  }
+}
+
+export async function addDeliveryCommentAction(
+  deliveryId: string,
+  comment: string
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session) return { error: "Unauthorized" };
+
+  const trimmed = comment.trim();
+  if (!trimmed) return { error: "Comment cannot be empty." };
+
+  try {
+    await updateDelivery(deliveryId, { riderComment: trimmed });
+    revalidatePath(`/rider/deliveries/${deliveryId}`);
+    return { success: true };
+  } catch (err) {
+    console.error("addDeliveryComment error:", err);
+    return { error: "Failed to save comment." };
   }
 }

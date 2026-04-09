@@ -26,6 +26,7 @@ interface DeliveryFields {
   "Delivery Time"?: string;
   "Completed Date"?: string;
   Notes?: string;
+  "Rider Comment"?: string;
   Distance?: number;
 }
 
@@ -60,6 +61,8 @@ function mapToDelivery(
     pickupTime: f["Pickup Time"] ?? null,
     deliveryTime: f["Delivery Time"] ?? null,
     notes: f["Notes"] ?? null,
+    riderComment: f["Rider Comment"] ?? null,
+    completedDate: f["Completed Date"] ?? null,
     distance: f["Distance"] ?? null,
   };
 }
@@ -227,6 +230,7 @@ export async function updateDelivery(
     priority: string;
     deliveryDate: string;
     notes: string;
+    riderComment: string;
     distance: number;
   }>
 ): Promise<void> {
@@ -241,6 +245,7 @@ export async function updateDelivery(
   if (fields.priority !== undefined) airtableFields["Priority"] = fields.priority;
   if (fields.deliveryDate !== undefined) airtableFields["Delivery Date"] = fields.deliveryDate;
   if (fields.notes !== undefined) airtableFields["Notes"] = fields.notes;
+  if (fields.riderComment !== undefined) airtableFields["Rider Comment"] = fields.riderComment;
   if (fields.distance !== undefined) airtableFields["Distance"] = fields.distance;
   await airtableUpdate("Deliveries", id, airtableFields);
 }

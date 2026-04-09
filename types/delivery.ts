@@ -20,5 +20,7 @@ export interface Delivery {
   pickupTime: string | null;
   deliveryTime: string | null;
   notes: string | null;
+  riderComment: string | null;
+  completedDate: string | null;
   distance: number | null;
 }
