@@ -7,7 +7,8 @@
       "Bash(ls /Users/breezyyy/Downloads/glam-delivery/app/\\\\\\(rider\\\\\\)/rider/)",
       "Bash(find /Users/breezyyy/Downloads/glam-delivery/.open-next -name *.json)",
       "Bash(find /Users/breezyyy/Downloads/glam-delivery -name firebase-client*)",
-      "Bash(grep -rn 'description.*Glam' /Users/breezyyy/Downloads/glam-delivery/*.ts /Users/breezyyy/Downloads/glam-delivery/*.js /Users/breezyyy/Downloads/glam-delivery/*.json)"
+      "Bash(grep -rn 'description.*Glam' /Users/breezyyy/Downloads/glam-delivery/*.ts /Users/breezyyy/Downloads/glam-delivery/*.js /Users/breezyyy/Downloads/glam-delivery/*.json)",
+      "Bash(bash deploy.sh)"
     ],
     "additionalDirectories": [
       "/Users/breezyyy/Downloads/glam-delivery/app/(rider)/rider/deliveries/[id]"

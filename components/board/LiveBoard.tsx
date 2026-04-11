@@ -27,6 +27,7 @@ const STATUS_DISPLAY: Record<string, { label: string; dot: string; pill: string;
   "Pending":     { label: "Pending",     dot: "bg-amber-400",              pill: "bg-amber-400/15 text-amber-300 border border-amber-500/40",      color: "text-amber-400"   },
   "In Progress": { label: "In Progress", dot: "bg-blue-400 animate-pulse", pill: "bg-blue-400/15 text-blue-300 border border-blue-500/40",         color: "text-blue-400"    },
   "Completed":   { label: "Completed",   dot: "bg-emerald-400",            pill: "bg-emerald-400/15 text-emerald-300 border border-emerald-500/40", color: "text-emerald-400" },
+  "On Hold":     { label: "On Hold",     dot: "bg-orange-400",             pill: "bg-orange-400/15 text-orange-300 border border-orange-500/40",     color: "text-orange-400"  },
 };
 
 function shouldShow(d: Delivery, now: Date): boolean {
@@ -103,9 +104,10 @@ export function LiveBoard({ initial, header }: { initial: BoardData; header?: Re
   const { deliveries, stats } = data;
   const inProgress  = deliveries.filter((d) => d.status === "In Progress");
   const pending     = deliveries.filter((d) => d.status === "Pending");
+  const onHold      = deliveries.filter((d) => d.status === "On Hold");
   // Before mount (now === null) show all completed; after mount apply the 30-min rule
   const completed   = deliveries.filter((d) => d.status === "Completed" && (now === null || shouldShow(d, now)));
-  const sorted      = [...inProgress, ...pending, ...completed];
+  const sorted      = [...inProgress, ...pending, ...onHold, ...completed];
   const totalPages  = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
 
   // Advance page with fade-out → swap → fade-in

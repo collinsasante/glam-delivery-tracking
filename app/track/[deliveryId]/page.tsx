@@ -38,6 +38,11 @@ const statusConfig = {
     pill: "bg-green-50 text-green-700 border-green-200",
     label: "Delivered",
   },
+  "On Hold": {
+    dot: "bg-orange-400",
+    pill: "bg-orange-50 text-orange-700 border-orange-200",
+    label: "On Hold",
+  },
 };
 
 export default async function TrackingPage({ params }: Props) {

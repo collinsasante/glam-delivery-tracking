@@ -1,4 +1,4 @@
-export type DeliveryStatus = "Pending" | "In Progress" | "Completed";
+export type DeliveryStatus = "Pending" | "In Progress" | "Completed" | "On Hold";
 export type DeliveryPriority = "Normal" | "Urgent" | "Express";
 export type Warehouse = "Pantang West" | "Amrahia";
 

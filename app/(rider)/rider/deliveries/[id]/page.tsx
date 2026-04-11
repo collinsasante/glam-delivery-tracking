@@ -38,6 +38,7 @@ const statusConfig = {
   Pending: { dot: "bg-amber-400", text: "text-amber-700", label: "Pending" },
   "In Progress": { dot: "bg-blue-400", text: "text-blue-700", label: "In Progress" },
   Completed: { dot: "bg-green-400", text: "text-green-700", label: "Delivered" },
+  "On Hold": { dot: "bg-orange-400", text: "text-orange-700", label: "On Hold" },
 };
 
 export default async function RiderDeliveryDetailPage({ params }: Props) {

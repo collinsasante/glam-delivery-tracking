@@ -14,6 +14,10 @@ const config: Record<DeliveryStatus, { dot: string; pill: string }> = {
     dot: "bg-green-400",
     pill: "bg-green-50 text-green-700 border-green-200",
   },
+  "On Hold": {
+    dot: "bg-orange-400",
+    pill: "bg-orange-50 text-orange-700 border-orange-200",
+  },
 };
 
 export function DeliveryStatusBadge({ status }: { status: DeliveryStatus }) {

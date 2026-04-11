@@ -158,8 +158,11 @@ export async function addDeliveryCommentAction(
   if (!trimmed) return { error: "Comment cannot be empty." };
 
   try {
+    // Save comment and mark delivery On Hold so admin knows to follow up
     await updateDelivery(deliveryId, { riderComment: trimmed });
+    await updateDeliveryStatus(deliveryId, "On Hold");
     revalidatePath(`/rider/deliveries/${deliveryId}`);
+    revalidatePath("/rider");
     return { success: true };
   } catch (err) {
     console.error("addDeliveryComment error:", err);
