@@ -1,9 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { signOutAction } from "@/actions/auth";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
 import type { SessionPayload } from "@/lib/session";
+import { SESSION_COOKIE } from "@/lib/session";
+import { getRiderById } from "@/services/riders";
 import { FcmRegistration } from "@/components/rider/FcmRegistration";
 
 export default async function RiderLayout({
@@ -15,6 +18,14 @@ export default async function RiderLayout({
   if (!session) redirect("/signin");
   const user = session.user as SessionPayload;
   if (user.role !== "Rider") redirect("/dashboard");
+
+  // Force sign-out if the rider account was deleted or deactivated
+  const riderRecord = await getRiderById(user.id).catch(() => null);
+  if (!riderRecord || !riderRecord.active) {
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_COOKIE);
+    redirect("/signin");
+  }
 
   return (
     <div className="min-h-full bg-gray-50">

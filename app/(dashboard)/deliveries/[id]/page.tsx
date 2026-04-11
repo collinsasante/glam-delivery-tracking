@@ -323,6 +323,16 @@ export default async function DeliveryDetailPage({ params }: Props) {
         </div>
       )}
 
+      {/* Rider comment */}
+      {delivery.riderComment && (
+        <div className="bg-amber-50 rounded-xl border border-amber-100 p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-500 mb-2">
+            Rider Note
+          </p>
+          <p className="text-sm text-amber-900 leading-relaxed">{delivery.riderComment}</p>
+        </div>
+      )}
+
       {/* Order ID */}
       {delivery.orderId && (
         <p className="text-xs text-gray-400">
