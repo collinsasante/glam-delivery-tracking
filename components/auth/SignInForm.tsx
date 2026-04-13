@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase-client";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -9,6 +9,10 @@ import { Loader2 } from "lucide-react";
 export function SignInForm() {
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotPending, setForgotPending] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -44,6 +48,70 @@ export function SignInForm() {
     } finally {
       setIsPending(false);
     }
+  }
+
+  async function handleForgotPassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setForgotPending(true);
+    try {
+      await sendPasswordResetEmail(firebaseAuth, forgotEmail);
+      setForgotSent(true);
+    } catch (err) {
+      console.error("[forgotPassword] error:", err);
+      setError("Could not send reset email. Check the address and try again.");
+      setShowForgot(false);
+    } finally {
+      setForgotPending(false);
+    }
+  }
+
+  if (showForgot) {
+    return (
+      <div className="space-y-5">
+        {forgotSent ? (
+          <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-4 text-sm text-green-800">
+            <p className="font-semibold mb-1">Check your email</p>
+            <p>A password reset link has been sent to <strong>{forgotEmail}</strong>.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Reset your password</h3>
+              <p className="text-sm text-gray-500 mt-1">Enter your email and we&apos;ll send you a reset link.</p>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <input
+                id="forgot-email"
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoFocus
+                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={forgotPending}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm px-4 py-2.5 transition"
+            >
+              {forgotPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : "Send reset link"}
+            </button>
+          </form>
+        )}
+        <button
+          type="button"
+          onClick={() => { setShowForgot(false); setForgotSent(false); setForgotEmail(""); }}
+          className="text-sm text-gray-500 hover:text-gray-700 transition"
+        >
+          ← Back to sign in
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -82,9 +150,13 @@ export function SignInForm() {
           autoComplete="current-password"
           className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition"
         />
-        <a href="#" className="text-xs text-red-800 hover:text-red-700 transition block text-right">
+        <button
+          type="button"
+          onClick={() => { setShowForgot(true); setError(""); }}
+          className="text-xs text-red-800 hover:text-red-700 transition block text-right w-full"
+        >
           Forgot password?
-        </a>
+        </button>
       </div>
 
       <div className="flex items-center gap-2">
@@ -113,8 +185,6 @@ export function SignInForm() {
           "Sign in"
         )}
       </button>
-
-
     </form>
   );
 }

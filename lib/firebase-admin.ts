@@ -124,22 +124,20 @@ export const adminAuth = {
     if (!res.ok) throw new Error("deleteUser failed");
   },
 
-  /** Generate a password reset link for a user (used as invite link) */
-  async generatePasswordResetLink(email: string): Promise<string> {
+  /** Send a password reset email via Firebase (Firebase handles delivery — no Resend needed) */
+  async sendPasswordResetEmail(email: string): Promise<void> {
     const token = await getServiceAccountToken();
     const res = await fetch(
       `https://identitytoolkit.googleapis.com/v1/projects/${projectId()}/accounts:sendOobCode`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestType: "PASSWORD_RESET", email, returnOobLink: true }),
+        body: JSON.stringify({ requestType: "PASSWORD_RESET", email }),
       }
     );
     if (!res.ok) {
       const err = (await res.json()) as { error: { message: string } };
-      throw new Error(err.error?.message ?? "generatePasswordResetLink failed");
+      throw new Error(err.error?.message ?? "sendPasswordResetEmail failed");
     }
-    const data = (await res.json()) as { oobLink: string };
-    return data.oobLink;
   },
 };

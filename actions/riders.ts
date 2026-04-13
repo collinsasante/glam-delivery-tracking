@@ -12,7 +12,6 @@ import {
   getRiderByEmail,
   getRiderById,
 } from "@/services/riders";
-import { sendInviteEmail } from "@/lib/email";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -45,14 +44,11 @@ export async function createRiderAction(data: unknown): Promise<ActionResult> {
     const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase();
     await adminAuth.createUser({ email, password: tempPassword, displayName: name });
 
-    // Generate a password reset / set-password link
-    const inviteLink = await adminAuth.generatePasswordResetLink(email);
-
     await createRider({ name, email, phone, role, vehicleType, active });
 
-    // Send invite email (non-fatal if email service not configured)
-    await sendInviteEmail({ to: email, name, role, inviteLink }).catch((e) =>
-      console.error("[invite] email failed:", e)
+    // Send password-set email via Firebase (non-fatal)
+    await adminAuth.sendPasswordResetEmail(email).catch((e) =>
+      console.error("[invite] Firebase password reset email failed:", e)
     );
 
     revalidatePath("/riders");
