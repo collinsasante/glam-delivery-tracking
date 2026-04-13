@@ -12,6 +12,7 @@ import {
   getRiderByEmail,
   getRiderById,
 } from "@/services/riders";
+import { sendInviteEmail } from "@/lib/email";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -46,10 +47,19 @@ export async function createRiderAction(data: unknown): Promise<ActionResult> {
 
     await createRider({ name, email, phone, role, vehicleType, active });
 
-    // Send password-set email via Firebase (non-fatal)
-    await adminAuth.sendPasswordResetEmail(email).catch((e) =>
-      console.error("[invite] Firebase password reset email failed:", e)
-    );
+    // Send invite email — use Resend (branded) if configured, otherwise Firebase
+    if (process.env.RESEND_API_KEY) {
+      const inviteLink = await adminAuth.generatePasswordResetLink(email).catch(() => null);
+      if (inviteLink) {
+        await sendInviteEmail({ to: email, name, role, inviteLink }).catch((e) =>
+          console.error("[invite] Resend email failed:", e)
+        );
+      }
+    } else {
+      await adminAuth.sendPasswordResetEmail(email).catch((e) =>
+        console.error("[invite] Firebase password reset email failed:", e)
+      );
+    }
 
     revalidatePath("/riders");
     revalidatePath("/staff");

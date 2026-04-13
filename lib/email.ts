@@ -12,7 +12,7 @@ export async function sendInviteEmail({
   inviteLink: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.FROM_EMAIL ?? "Drop <noreply@glam-delivery.pages.dev>";
+  const from = process.env.FROM_EMAIL ?? "Drop <noreply@packglamour.com>";
 
   if (!apiKey) {
     console.warn("[email] RESEND_API_KEY not set — skipping invite email");
@@ -31,7 +31,7 @@ export async function sendInviteEmail({
       subject: `You've been invited to Drop`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#111">
-          <img src="https://glam-delivery.pages.dev/logo.png" width="48" height="48" style="border-radius:10px;margin-bottom:24px" />
+          <img src="https://delivery.packglamour.com/logo.png" width="48" height="48" style="border-radius:10px;margin-bottom:24px" />
           <h2 style="margin:0 0 8px;font-size:22px">Welcome to Drop, ${name}!</h2>
           <p style="color:#555;margin:0 0 24px">
             You've been added as a <strong>${role}</strong>. Click the button below to set your password and sign in.
