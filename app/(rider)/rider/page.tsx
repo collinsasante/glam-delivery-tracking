@@ -67,7 +67,7 @@ export default async function RiderPage() {
 
   return (
     <ClockInProvider initialClockedIn={clockedIn}>
-    <div className="space-y-4">
+    <div className="space-y-[18px]">
       {/* Shift status */}
       <ClockInButton
         initialClockedIn={clockedIn}
@@ -76,38 +76,35 @@ export default async function RiderPage() {
       />
 
       {/* Today's stats */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         {[
           {
             label: "Pending",
             value: pending.length,
             dot: "bg-amber-400",
-            text: "text-amber-700",
-            bg: "bg-amber-50",
+            text: "text-amber-600",
           },
           {
             label: "Active",
             value: active.length,
             dot: "bg-blue-400",
-            text: "text-blue-700",
-            bg: "bg-blue-50",
+            text: "text-blue-600",
           },
           {
             label: "Done",
             value: completed.length,
             dot: "bg-green-400",
-            text: "text-green-700",
-            bg: "bg-green-50",
+            text: "text-green-600",
           },
-        ].map(({ label, value, dot, text, bg }) => (
+        ].map(({ label, value, dot, text }) => (
           <div
             key={label}
-            className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center"
+            className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_10px_22px_-16px_rgba(16,24,32,0.2)] px-3.5 py-4 text-center"
           >
-            <p className={`text-2xl font-bold tabular-nums ${text}`}>{value}</p>
-            <div className="flex items-center justify-center gap-1 mt-1">
-              <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-              <p className="text-[10px] font-medium text-gray-500">{label}</p>
+            <p className={`text-2xl font-extrabold tracking-tight tabular-nums ${text}`}>{value}</p>
+            <div className="flex items-center justify-center gap-1.5 mt-1.5">
+              <span className={`w-[5px] h-[5px] rounded-full ${dot}`} />
+              <p className="text-[11px] font-semibold text-gray-400">{label}</p>
             </div>
           </div>
         ))}
@@ -115,10 +112,10 @@ export default async function RiderPage() {
 
       {/* Active delivery — most prominent */}
       {activeWithStops.length > 0 && (
-        <section className="space-y-2">
+        <section className="space-y-2.5">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-[15px] font-bold text-gray-900">
               Active delivery
             </h2>
           </div>
@@ -136,13 +133,13 @@ export default async function RiderPage() {
 
       {/* Pending deliveries */}
       {pending.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-gray-900">
+        <section className="space-y-2.5">
+          <h2 className="text-[15px] font-bold text-gray-900">
             Pending{" "}
-            <span className="font-normal text-gray-400">({pending.length})</span>
+            <span className="font-normal text-gray-400 text-[13px]">({pending.length})</span>
           </h2>
           {!clockedIn && (
-            <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-700">
+            <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
               Clock in to start accepting deliveries
             </div>
@@ -161,10 +158,10 @@ export default async function RiderPage() {
 
       {/* Completed today */}
       {completed.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-gray-900">
+        <section className="space-y-2.5">
+          <h2 className="text-[15px] font-bold text-gray-900">
             Completed today{" "}
-            <span className="font-normal text-gray-400">({completed.length})</span>
+            <span className="font-normal text-gray-400 text-[13px]">({completed.length})</span>
           </h2>
           {completed.map((delivery) => (
             <DeliveryCard
@@ -180,8 +177,8 @@ export default async function RiderPage() {
       {/* Empty state */}
       {deliveries.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
-            <Package className="h-6 w-6 text-gray-400" />
+          <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+            <Package className="h-6 w-6 text-gray-400" strokeWidth={1.8} />
           </div>
           <p className="text-sm font-medium text-gray-700">No deliveries assigned</p>
           <p className="text-xs text-gray-400 mt-1">
@@ -192,8 +189,8 @@ export default async function RiderPage() {
 
       {/* Shift history */}
       {clockHistory.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_10px_22px_-16px_rgba(16,24,32,0.2)] p-[18px]">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-400 mb-3">
             Today&apos;s shifts
           </p>
           <div className="space-y-1.5">

@@ -38,19 +38,19 @@ export default async function DeliveriesPage({ searchParams }: Props) {
   }));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Deliveries</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-[26px] font-bold tracking-tight text-gray-900">Deliveries</h1>
+          <p className="text-[13.5px] text-gray-400 mt-1.5">
             {enriched.length} total
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <ExportButton deliveries={enriched} />
           <Link href="/deliveries/new">
-            <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
+            <Button className="h-11 px-5 rounded-xl bg-red-800 hover:bg-red-900 gap-2 text-[13.5px] font-semibold shadow-[0_6px_16px_-4px_rgba(153,27,27,0.5)]">
               <Plus className="h-4 w-4" />
               New Delivery
             </Button>

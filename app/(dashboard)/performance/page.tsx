@@ -40,12 +40,12 @@ export default async function PerformancePage({ searchParams }: Props) {
       : `${range.start} → ${range.end}`;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Performance</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-[26px] font-bold tracking-tight text-gray-900">Performance</h1>
+          <p className="text-[13.5px] text-gray-400 mt-1.5">
             {label} · {rangeLabel}
           </p>
         </div>
@@ -62,9 +62,9 @@ export default async function PerformancePage({ searchParams }: Props) {
 
       {/* Ranking table */}
       {scores.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 px-4 text-center">
-          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-3 mx-auto">
-            <TrendingUp className="h-5 w-5 text-gray-400" />
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] py-16 px-4 text-center">
+          <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center mb-3 mx-auto">
+            <TrendingUp className="h-5 w-5 text-gray-400" strokeWidth={1.8} />
           </div>
           <p className="text-sm font-medium text-gray-700">No active riders</p>
           <p className="text-xs text-gray-400 mt-1">Add riders with the Rider role to see rankings</p>

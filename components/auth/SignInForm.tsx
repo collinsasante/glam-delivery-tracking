@@ -69,18 +69,18 @@ export function SignInForm() {
     return (
       <div className="space-y-5">
         {forgotSent ? (
-          <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-4 text-sm text-green-800">
+          <div className="rounded-xl bg-green-50 px-4 py-4 text-sm text-green-800">
             <p className="font-semibold mb-1">Check your email</p>
             <p>A password reset link has been sent to <strong>{forgotEmail}</strong>.</p>
           </div>
         ) : (
           <form onSubmit={handleForgotPassword} className="space-y-4">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Reset your password</h3>
+              <h3 className="text-base font-bold text-gray-900">Reset your password</h3>
               <p className="text-sm text-gray-500 mt-1">Enter your email and we&apos;ll send you a reset link.</p>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="forgot-email" className="block text-[12.5px] font-semibold text-gray-700">
                 Email address
               </label>
               <input
@@ -91,13 +91,13 @@ export function SignInForm() {
                 placeholder="you@example.com"
                 required
                 autoFocus
-                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition"
+                className="w-full h-11 rounded-xl border-[1.5px] border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 px-4 text-sm focus:outline-none focus:ring-[3.5px] focus:ring-black/[0.06] focus:border-gray-900 transition"
               />
             </div>
             <button
               type="submit"
               disabled={forgotPending}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm px-4 py-2.5 transition"
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-red-800 hover:bg-red-900 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-[14.5px] shadow-[0_10px_22px_-8px_rgba(153,27,27,0.55)] transition"
             >
               {forgotPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : "Send reset link"}
             </button>
@@ -115,32 +115,41 @@ export function SignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       <div className="space-y-1.5">
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email address
+        <label htmlFor="email" className="block text-[12.5px] font-semibold text-gray-700">
+          Email
         </label>
         <input
           id="email"
           name="email"
           type="email"
-          placeholder="you@example.com"
+          placeholder="you@packglamour.com"
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition"
+          className="w-full h-11 rounded-xl border-[1.5px] border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 px-4 text-sm focus:outline-none focus:ring-[3.5px] focus:ring-black/[0.06] focus:border-gray-900 transition"
         />
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="password" className="block text-[12.5px] font-semibold text-gray-700">
+            Password
+          </label>
+          <button
+            type="button"
+            onClick={() => { setShowForgot(true); setError(""); }}
+            className="text-xs text-red-800 hover:text-red-700 transition font-semibold"
+          >
+            Forgot?
+          </button>
+        </div>
         <input
           id="password"
           name="password"
@@ -148,18 +157,11 @@ export function SignInForm() {
           placeholder="••••••••"
           required
           autoComplete="current-password"
-          className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition"
+          className="w-full h-11 rounded-xl border-[1.5px] border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 px-4 text-sm focus:outline-none focus:ring-[3.5px] focus:ring-black/[0.06] focus:border-gray-900 transition"
         />
-        <button
-          type="button"
-          onClick={() => { setShowForgot(true); setError(""); }}
-          className="text-xs text-red-800 hover:text-red-700 transition block text-right w-full"
-        >
-          Forgot password?
-        </button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pt-1">
         <input
           id="remember"
           name="remember"
@@ -174,7 +176,7 @@ export function SignInForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm px-4 py-2.5 transition"
+        className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-red-800 hover:bg-red-900 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-[14.5px] shadow-[0_10px_22px_-8px_rgba(153,27,27,0.55)] transition mt-1"
       >
         {isPending ? (
           <>

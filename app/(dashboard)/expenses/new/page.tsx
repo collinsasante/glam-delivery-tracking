@@ -22,7 +22,7 @@ export default async function NewExpensePage() {
           <ChevronLeft className="h-4 w-4" />
           Back to expenses
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">Add Expense</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">Add Expense</h1>
       </div>
       <AdminExpenseForm riders={activeRiders} />
     </div>

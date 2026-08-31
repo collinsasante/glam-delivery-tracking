@@ -82,11 +82,11 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
             {rider.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{rider.name}</h1>
+            <h1 className="text-[22px] font-bold tracking-tight text-gray-900">{rider.name}</h1>
             <p className="text-sm text-gray-400">{rider.riderId}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+        <div className="bg-white rounded-2xl border border-black/[0.045] p-8 text-center">
           <p className="text-sm text-gray-500">No data for {formatPeriodLabel(period).toLowerCase()}</p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
               ) : rider.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{rider.name}</h1>
+              <h1 className="text-[22px] font-bold tracking-tight text-gray-900">{rider.name}</h1>
               <p className="text-sm text-gray-400 font-mono">{rider.riderId}</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
       </div>
 
       {/* Score card */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-xs text-gray-400 mb-1">{formatPeriodLabel(period)} score</p>
@@ -169,7 +169,7 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
           { icon: Navigation, label: "Distance", value: stats.totalDistanceKm > 0 ? `${stats.totalDistanceKm} km` : "—" },
           { icon: Clock, label: "Duration", value: stats.totalDurationMins > 0 ? `${stats.totalDurationMins} min` : "—" },
         ].map(({ icon: Icon, label, value }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
+          <div key={label} className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-[18px] text-center">
             <Icon className="h-4 w-4 text-gray-400 mx-auto mb-1.5" />
             <p className="text-lg font-bold text-gray-900">{value}</p>
             <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide">{label}</p>
@@ -179,8 +179,8 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
 
       {/* Daily trend */}
       {activeDays.length > 1 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Daily Trend</p>
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-6">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-4">Daily Trend</p>
           <div className="space-y-2">
             {activeDays.map((d) => (
               <div key={d.date} className="flex items-center gap-3">
@@ -210,8 +210,8 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
 
       {/* Attendance log */}
       {clockEvents.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-6">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-3">
             Attendance — {formatPeriodLabel(period)}
           </p>
           <div className="space-y-3">
@@ -243,8 +243,8 @@ export default async function RiderPerformancePage({ params, searchParams }: Pro
 
       {/* Attendance summary */}
       {stats.expectedWorkDays > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">Attendance Summary</p>
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-6">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-3">Attendance Summary</p>
           <div className="flex items-center gap-4">
             <div className="flex-1 h-2 rounded-full bg-gray-100">
               <div

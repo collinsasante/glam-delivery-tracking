@@ -43,7 +43,7 @@ export default async function ExpenseDetailPage({ params }: Props) {
         </Link>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{expense.expenseType}</h1>
+            <h1 className="text-[22px] font-bold tracking-tight text-gray-900">{expense.expenseType}</h1>
             <p className="text-sm text-gray-400 mt-0.5">Expense #{id.slice(-6).toUpperCase()}</p>
           </div>
           <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export default async function ExpenseDetailPage({ params }: Props) {
       </div>
 
       {/* Amount */}
-      <Card className="border-gray-200 shadow-none">
+      <Card>
         <CardContent className="p-5">
           <p className="text-xs text-gray-400 mb-1">Amount</p>
           <p className="text-4xl font-bold text-gray-900">GH₵{expense.amount.toFixed(2)}</p>
@@ -64,7 +64,7 @@ export default async function ExpenseDetailPage({ params }: Props) {
       </Card>
 
       {/* Details */}
-      <Card className="border-gray-200 shadow-none">
+      <Card>
         <CardContent className="p-5 space-y-4">
           <div className="flex items-center gap-3 text-sm">
             <User className="h-4 w-4 text-gray-400 shrink-0" />
@@ -122,7 +122,7 @@ export default async function ExpenseDetailPage({ params }: Props) {
 
       {/* Receipt */}
       {expense.receiptUrl && (
-        <Card className="border-gray-200 shadow-none">
+        <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-gray-400">Receipt</p>

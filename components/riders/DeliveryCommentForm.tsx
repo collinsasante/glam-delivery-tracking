@@ -29,10 +29,10 @@ export function DeliveryCommentForm({ deliveryId, existingComment }: DeliveryCom
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+    <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px]">
       <div className="flex items-center gap-2 mb-3">
         <MessageSquare className="h-4 w-4 text-gray-400" />
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">
           Rider Note
         </p>
         {saved && (

@@ -18,7 +18,7 @@ export default function NewRiderPage() {
           <ChevronLeft className="h-4 w-4" />
           Back to riders
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">Add Rider</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">Add Rider</h1>
       </div>
       <RiderForm />
     </div>

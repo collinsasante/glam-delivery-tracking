@@ -48,7 +48,7 @@ export function PerformanceTable({ scores }: Props) {
 
   if (scores.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 px-4 text-center">
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] py-16 px-4 text-center">
         <p className="text-sm font-medium text-gray-700">No riders with data</p>
         <p className="text-xs text-gray-400 mt-1">Assign and complete deliveries to see performance scores</p>
       </div>
@@ -57,29 +57,29 @@ export function PerformanceTable({ scores }: Props) {
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-b border-gray-100">
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide pl-4 w-8">#</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Rider</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Score</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Speed</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Completion</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Consistency</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Stops</TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Distance</TableHead>
+            <TableRow className="bg-[#fafafb] hover:bg-[#fafafb] border-b border-black/[0.05]">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em] pl-[22px] w-8">#</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Rider</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Score</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Speed</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Completion</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Consistency</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Stops</TableHead>
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">Distance</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {scores.map((s, rank) => (
               <TableRow
                 key={s.rider.id}
-                className="group hover:bg-gray-50/70 cursor-pointer border-b border-gray-50 last:border-0"
+                className="group hover:bg-[#fafafb] cursor-pointer border-b border-black/[0.045] last:border-0"
                 onClick={() => setSelected(s)}
               >
                 {/* Rank */}
-                <TableCell className="pl-4">
+                <TableCell className="pl-[22px] py-3.5">
                   <span className={`text-xs font-semibold ${rank === 0 ? "text-amber-600" : rank === 1 ? "text-gray-500" : rank === 2 ? "text-orange-500" : "text-gray-300"}`}>
                     {rank + 1}
                   </span>

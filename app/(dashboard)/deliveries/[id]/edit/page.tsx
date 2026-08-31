@@ -34,8 +34,8 @@ export default async function EditDeliveryPage({ params }: Props) {
           <ChevronLeft className="h-4 w-4" />
           Back to delivery
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">Edit Delivery</h1>
-        <p className="text-sm text-gray-500 mt-0.5 font-mono">{delivery.deliveryId}</p>
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">Edit Delivery</h1>
+        <p className="text-[13.5px] text-gray-400 mt-1.5 font-mono">{delivery.deliveryId}</p>
       </div>
       <DeliveryForm riders={riders} deliveryId={id} initialDelivery={delivery} />
     </div>

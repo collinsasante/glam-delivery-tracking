@@ -2,7 +2,6 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Clock, LogIn, LogOut, Loader2 } from "lucide-react";
 import { clockInAction, clockOutAction } from "@/actions/clockEvents";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -92,42 +91,27 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
   }
 
   return (
-    <div
-      className={cn(
-        "rounded-xl border p-5 transition-colors",
-        isClockedIn
-          ? "bg-green-50 border-green-200"
-          : "bg-white border-gray-200"
-      )}
-    >
+    <div className="rounded-[20px] bg-gradient-to-br from-[#141416] to-[#0b0b0d] p-[22px] shadow-[0_16px_30px_-14px_rgba(0,0,0,0.4)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center",
-              isClockedIn ? "bg-green-100" : "bg-gray-100"
+              "w-10 h-10 rounded-[11px] flex items-center justify-center bg-white/[0.08]"
             )}
           >
             <Clock
-              className={cn(
-                "h-5 w-5",
-                isClockedIn ? "text-green-600" : "text-gray-400"
-              )}
+              className={cn("h-[19px] w-[19px]", isClockedIn ? "text-green-400" : "text-gray-300")}
+              strokeWidth={1.8}
             />
           </div>
           <div>
-            <p
-              className={cn(
-                "text-sm font-semibold leading-tight",
-                isClockedIn ? "text-green-800" : "text-gray-700"
-              )}
-            >
+            <p className="text-[14.5px] font-bold leading-tight text-white">
               {isClockedIn ? "On Shift" : "Off Shift"}
             </p>
             {isClockedIn && elapsed ? (
-              <p className="text-xs text-green-600 mt-0.5">{elapsed} elapsed</p>
+              <p className="text-xs text-green-400 mt-0.5 font-medium">{elapsed} elapsed</p>
             ) : (
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {isClockedIn
                   ? "Tracking time"
                   : hasClockInToday
@@ -138,15 +122,14 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
           </div>
         </div>
 
-        <Button
+        <button
           onClick={handle}
           disabled={isPending || (!isClockedIn && hasClockInToday)}
-          size="sm"
           className={cn(
-            "gap-1.5",
+            "flex items-center gap-1.5 rounded-[11px] px-[18px] h-11 text-[13px] font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none",
             isClockedIn
-              ? "bg-white border border-red-200 text-red-600 hover:bg-red-50 shadow-none"
-              : "bg-green-600 hover:bg-green-700 text-white"
+              ? "bg-white/[0.08] text-red-400 hover:bg-white/[0.12]"
+              : "bg-red-800 text-white shadow-[0_8px_18px_-6px_rgba(153,27,27,0.6)] hover:bg-red-900"
           )}
         >
           {isPending ? (
@@ -162,11 +145,11 @@ export function ClockInButton({ initialClockedIn, clockInTimestamp, hasClockInTo
               Clock in
             </>
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Status bar */}
-      <div className="mt-4 h-1 rounded-full bg-black/5 overflow-hidden">
+      <div className="mt-5 h-1 rounded-full bg-white/[0.08] overflow-hidden">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-700",

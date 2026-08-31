@@ -18,7 +18,7 @@ export default function RiderNewExpensePage() {
           <ChevronLeft className="h-4 w-4" />
           Back
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">Submit Expense</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">Submit Expense</h1>
         <p className="text-sm text-gray-400 mt-0.5">
           Submit a work-related expense for review
         </p>

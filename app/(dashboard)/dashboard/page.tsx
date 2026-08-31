@@ -41,12 +41,12 @@ export default async function DashboardPage({ searchParams }: Props) {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-[26px] font-bold tracking-tight text-gray-900">Dashboard</h1>
+          <p className="text-[13.5px] text-gray-400 mt-1.5">
             {new Date().toLocaleDateString("en-GB", {
               weekday: "long",
               day: "numeric",
@@ -56,7 +56,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </p>
         </div>
         <Link href="/deliveries/new">
-          <Button className="bg-red-800 hover:bg-red-900 gap-2 shadow-sm">
+          <Button className="h-11 px-5 rounded-xl bg-red-800 hover:bg-red-900 gap-2 text-[13.5px] font-semibold shadow-[0_6px_16px_-4px_rgba(153,27,27,0.5)]">
             <Plus className="h-4 w-4" />
             New Delivery
           </Button>
@@ -77,11 +77,11 @@ export default async function DashboardPage({ searchParams }: Props) {
       </Suspense>
 
       {/* Deliveries section */}
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold text-gray-900">
+          <h2 className="text-base font-bold text-gray-900">
             Deliveries
-            <span className="ml-2 font-normal text-gray-400">
+            <span className="ml-2 font-normal text-gray-400 text-[13px]">
               ({enriched.length})
             </span>
           </h2>

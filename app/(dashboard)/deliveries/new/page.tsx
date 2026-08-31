@@ -22,8 +22,8 @@ export default async function NewDeliveryPage() {
           Back to dashboard
         </Link>
 
-        <h1 className="text-xl font-semibold text-gray-900">New Delivery</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">New Delivery</h1>
+        <p className="text-[13.5px] text-gray-400 mt-1.5">
           Create a single or multi-stop delivery
         </p>
       </div>

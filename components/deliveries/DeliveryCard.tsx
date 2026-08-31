@@ -64,45 +64,44 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
   return (
     <div
       className={cn(
-        "rounded-xl border bg-white p-4 space-y-3",
+        "rounded-[18px] border bg-white p-[18px] space-y-3.5 shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)]",
         variant === "active"
           ? "border-blue-200 ring-1 ring-blue-100"
           : variant === "completed"
-          ? "border-green-100 bg-green-50/30"
-          : "border-gray-200"
+          ? "border-green-100 bg-[#f7fbf8] shadow-none"
+          : "border-black/[0.045]"
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-mono text-[11px] text-gray-400 leading-none">
               {delivery.deliveryId}
             </span>
             {delivery.priority !== "Normal" && (
               <span
                 className={cn(
-                  "text-[10px] font-medium px-1.5 py-0.5 rounded",
+                  "text-[10px] font-bold px-[7px] py-[2px] rounded-[6px]",
                   priority.className
                 )}
               >
-                {priority.label}
+                {priority.label.toUpperCase()}
               </span>
             )}
           </div>
-          <p className="text-[15px] font-semibold text-gray-900 leading-tight">
+          <p className="text-[15px] font-bold text-gray-900 leading-tight">
             {delivery.customerName}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {variant === "completed" && (
-            <div className="flex items-center gap-1 text-green-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-xs font-medium">Done</span>
+            <div className="w-[26px] h-[26px] rounded-full bg-green-500 flex items-center justify-center">
+              <CheckCircle2 className="h-3.5 w-3.5 text-white" strokeWidth={3} />
             </div>
           )}
           {variant === "active" && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-blue-800 bg-blue-50 px-[10px] py-[5px] rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
               Active
             </span>
@@ -119,14 +118,14 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
       </div>
 
       {/* Details */}
-      <div className="space-y-1.5">
-        <div className="flex items-start gap-2 text-sm text-gray-600">
-          <MapPin className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
+      <div className="space-y-2">
+        <div className="flex items-start gap-2.5 text-[13px] text-gray-600">
+          <MapPin className="h-[15px] w-[15px] text-gray-400 mt-0.5 shrink-0" strokeWidth={1.8} />
           <span className="leading-snug">{delivery.dropoffLocation}</span>
         </div>
         {delivery.customerPhone && (
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+          <div className="flex items-center gap-2.5 text-[13px]">
+            <Phone className="h-[15px] w-[15px] text-gray-400 shrink-0" strokeWidth={1.8} />
             <a
               href={`tel:${delivery.customerPhone}`}
               className="text-gray-600 hover:text-red-800 transition-colors"
@@ -136,8 +135,8 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
           </div>
         )}
         {delivery.distance != null && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Navigation className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+          <div className="flex items-center gap-2.5 text-[13px] text-gray-500">
+            <Navigation className="h-[15px] w-[15px] text-gray-400 shrink-0" strokeWidth={1.8} />
             <span>{delivery.distance} km</span>
           </div>
         )}
@@ -146,8 +145,7 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
       {/* Actions */}
       {variant === "pending" && (
         <Button
-          className="w-full gap-2 bg-red-800 hover:bg-red-900 text-white"
-          size="sm"
+          className="w-full gap-2 h-11 rounded-[11px] bg-red-800 hover:bg-red-900 text-white text-[13px] font-semibold shadow-[0_8px_16px_-8px_rgba(153,27,27,0.5)]"
           onClick={handleStart}
           disabled={isPending}
         >
@@ -164,8 +162,7 @@ export function DeliveryCard({ delivery, stop, isClockedIn: initialClockedIn, va
 
       {variant === "active" && (
         <Button
-          className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
-          size="sm"
+          className="w-full gap-2 h-11 rounded-[11px] bg-green-600 hover:bg-green-700 text-white text-[13px] font-semibold shadow-[0_8px_16px_-8px_rgba(22,163,74,0.4)]"
           onClick={handleArrived}
           disabled={isPending}
         >

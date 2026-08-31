@@ -88,7 +88,7 @@ export default async function DeliveryDetailPage({ params }: Props) {
                 </span>
               )}
             </div>
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-[22px] font-bold tracking-tight text-gray-900">
               {delivery.customerName}
             </h1>
           </div>
@@ -107,10 +107,10 @@ export default async function DeliveryDetailPage({ params }: Props) {
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
         {/* Customer */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-5 space-y-3.5">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">
             Customer
           </p>
           <div className="space-y-2">
@@ -168,8 +168,8 @@ export default async function DeliveryDetailPage({ params }: Props) {
         </div>
 
         {/* Delivery info */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-5 space-y-3.5">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">
             Delivery
           </p>
           <div className="space-y-2">
@@ -203,8 +203,8 @@ export default async function DeliveryDetailPage({ params }: Props) {
 
         {/* Times */}
         {(delivery.pickupTime || delivery.deliveryTime) && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-5 space-y-3.5">
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">
               Times
             </p>
             <div className="space-y-2">
@@ -233,8 +233,8 @@ export default async function DeliveryDetailPage({ params }: Props) {
       </div>
 
       {/* Route: start → actual drop point */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-5 space-y-3.5">
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">
           Route
         </p>
         <div className="space-y-3">
@@ -315,8 +315,8 @@ export default async function DeliveryDetailPage({ params }: Props) {
 
       {/* Notes */}
       {delivery.notes && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-5">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-2">
             Notes
           </p>
           <p className="text-sm text-gray-600 leading-relaxed">{delivery.notes}</p>
@@ -325,7 +325,7 @@ export default async function DeliveryDetailPage({ params }: Props) {
 
       {/* Rider comment */}
       {delivery.riderComment && (
-        <div className="bg-amber-50 rounded-xl border border-amber-100 p-4">
+        <div className="bg-amber-50 rounded-2xl p-5">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-500 mb-2">
             Rider Note
           </p>

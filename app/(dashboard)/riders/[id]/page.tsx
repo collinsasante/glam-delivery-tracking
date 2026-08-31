@@ -50,7 +50,7 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
       </Link>
 
       {/* Profile header */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-6">
         <div className="flex items-start gap-4">
           <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-800 font-bold text-xl shrink-0 overflow-hidden">
             {rider.photoUrl ? (
@@ -67,11 +67,11 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
           <div className="flex-1 min-w-0">
 
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-lg font-bold text-gray-900">
                 {rider.name}
               </h1>
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                className={`text-[10.5px] font-semibold px-[10px] py-[4px] rounded-full ${
                   rider.role === "Admin"
                     ? "bg-red-800 text-white"
                     : "bg-gray-100 text-gray-600"
@@ -80,7 +80,7 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
                 {rider.role}
               </span>
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                className={`text-[10.5px] font-semibold px-[10px] py-[4px] rounded-full ${
                   rider.active
                     ? "bg-green-50 text-green-700"
                     : "bg-gray-100 text-gray-400"
@@ -146,12 +146,12 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
         ].map(({ label, value, sub }) => (
           <div
             key={label}
-            className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center"
+            className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-[18px] text-center"
           >
-            <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">
+            <p className="text-[26px] font-extrabold tracking-tight text-gray-900 tabular-nums leading-none">
               {value}
             </p>
-            <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-1.5">
+            <p className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em] mt-1.5">
               {label}
             </p>
             <p className="text-[10px] text-gray-400">{sub}</p>
@@ -161,8 +161,8 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
 
       {/* Today's clock events */}
       {todayClockEvents.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] p-6">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-3">
             Today&apos;s Attendance
           </p>
           <div className="space-y-3">
@@ -223,7 +223,7 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
       {/* Delivery history */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-400" />
             Deliveries
             <span className="font-normal text-gray-400">({deliveries.length})</span>
@@ -245,11 +245,11 @@ export default async function RiderDetailPage({ params, searchParams }: Props) {
           </div>
         </div>
         {deliveries.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-8 text-center">
+          <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] py-8 text-center">
             <p className="text-sm text-gray-400">No deliveries for this period</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)] overflow-hidden">
             {deliveries.map((d, i) => (
               <Link
                 key={d.id}

@@ -86,7 +86,7 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
       </Link>
 
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -97,7 +97,7 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
                 </span>
               )}
             </div>
-            <p className="text-lg font-semibold text-gray-900 leading-tight">{delivery.customerName}</p>
+            <p className="text-[17px] font-bold text-gray-900 leading-tight">{delivery.customerName}</p>
             {delivery.orderId && (
               <p className="text-xs text-gray-400 font-mono mt-0.5">Order #{delivery.orderId}</p>
             )}
@@ -110,8 +110,8 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
       </div>
 
       {/* Customer & delivery info */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Details</p>
+      <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px] space-y-3">
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">Details</p>
 
         <div className="flex items-center gap-2 text-sm">
           <User className="h-4 w-4 text-gray-400 shrink-0" />
@@ -151,8 +151,8 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
 
       {/* Times */}
       {(delivery.pickupTime || delivery.deliveryTime) && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Times</p>
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px] space-y-3">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300">Times</p>
           <div className="grid grid-cols-2 gap-3">
             {delivery.pickupTime && (
               <div className="flex items-center gap-2 text-sm">
@@ -178,8 +178,8 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
 
       {/* Distance & duration */}
       {(distanceKm != null || durationMins != null) && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-3">Trip</p>
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px]">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-3">Trip</p>
           <div className="flex items-center gap-6">
             {distanceKm != null && (
               <div className="flex items-center gap-2">
@@ -205,8 +205,8 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
 
       {/* Actual drop GPS */}
       {completedStop?.riderGps && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">Delivered at</p>
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px]">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-2">Delivered at</p>
           <a
             href={`https://maps.google.com/?q=${completedStop.riderGps.lat},${completedStop.riderGps.lng}`}
             target="_blank"
@@ -220,8 +220,8 @@ export default async function RiderDeliveryDetailPage({ params }: Props) {
 
       {/* Notes */}
       {delivery.notes && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">Notes</p>
+        <div className="bg-white rounded-2xl border border-black/[0.045] shadow-[0_1px_2px_rgba(16,24,32,0.04),0_12px_24px_-16px_rgba(16,24,32,0.2)] p-[18px]">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-gray-300 mb-2">Notes</p>
           <p className="text-sm text-gray-600 leading-relaxed">{delivery.notes}</p>
         </div>
       )}

@@ -4,19 +4,19 @@ import type { DeliveryStatus } from "@/types/delivery";
 const config: Record<DeliveryStatus, { dot: string; pill: string }> = {
   Pending: {
     dot: "bg-amber-400",
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
+    pill: "bg-amber-50 text-amber-800",
   },
   "In Progress": {
     dot: "bg-blue-400",
-    pill: "bg-blue-50 text-blue-700 border-blue-200",
+    pill: "bg-blue-50 text-blue-800",
   },
   Completed: {
     dot: "bg-green-400",
-    pill: "bg-green-50 text-green-700 border-green-200",
+    pill: "bg-green-50 text-green-800",
   },
   "On Hold": {
     dot: "bg-orange-400",
-    pill: "bg-orange-50 text-orange-700 border-orange-200",
+    pill: "bg-orange-50 text-orange-800",
   },
 };
 
@@ -26,11 +26,11 @@ export function DeliveryStatusBadge({ status }: { status: DeliveryStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
+        "inline-flex items-center gap-1.5 px-[11px] py-[5px] rounded-full text-xs font-semibold",
         c.pill
       )}
     >
-      <span className={cn("size-1.5 rounded-full shrink-0", c.dot)} />
+      <span className={cn("size-[5px] rounded-full shrink-0", c.dot)} />
       {status}
     </span>
   );

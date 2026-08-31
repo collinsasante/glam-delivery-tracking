@@ -27,8 +27,8 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-full">
       <AdminSidebar userName={user.name ?? "Admin"} />
-      <main className="pl-56 flex-1 min-h-full min-w-0 overflow-x-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8">{children}</div>
+      <main className="pl-64 flex-1 min-h-full min-w-0 overflow-x-auto">
+        <div className="max-w-5xl mx-auto px-11 py-10">{children}</div>
       </main>
     </div>
   );

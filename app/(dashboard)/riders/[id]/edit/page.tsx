@@ -29,7 +29,7 @@ export default async function RiderEditPage({ params }: Props) {
       </Link>
 
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Edit {rider.name}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">Edit {rider.name}</h1>
         <p className="text-sm text-gray-400 mt-0.5">{rider.riderId}</p>
       </div>
 

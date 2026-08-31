@@ -55,7 +55,7 @@ export function DeliveryTable({ deliveries }: Props) {
 
   if (deliveries.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-100 bg-white py-16 px-4 text-center">
+      <div className="rounded-2xl border border-black/[0.045] bg-white py-16 px-4 text-center shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)]">
         <p className="text-sm font-medium text-gray-600">No deliveries found</p>
         <p className="text-xs text-gray-400 mt-1">
           Try adjusting your filters or date range
@@ -66,35 +66,35 @@ export function DeliveryTable({ deliveries }: Props) {
 
   return (
     <div>
-      <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+      <div className="rounded-2xl border border-black/[0.045] bg-white overflow-hidden shadow-[0_1px_2px_rgba(16,24,32,0.04),0_14px_28px_-18px_rgba(16,24,32,0.18)]">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-b border-gray-100">
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide pl-4">
+            <TableRow className="bg-[#fafafb] hover:bg-[#fafafb] border-b border-black/[0.05]">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em] pl-[22px] py-3.5">
                 ID
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Customer
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Dropoff
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Rider
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Date
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Pickup
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Delivered
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Dist.
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+              <TableHead className="text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.06em]">
                 Status
               </TableHead>
               <TableHead className="w-16" />
@@ -104,38 +104,38 @@ export function DeliveryTable({ deliveries }: Props) {
             {paged.map((d) => (
               <TableRow
                 key={d.id}
-                className="group hover:bg-gray-50/60 cursor-pointer border-b border-gray-50 last:border-0"
+                className="group hover:bg-[#fafafb] cursor-pointer border-b border-black/[0.045] last:border-0"
                 onClick={() => router.push(`/deliveries/${d.id}`)}
               >
-                <TableCell className="pl-4">
-                  <span className="font-mono text-[11px] text-gray-400">
+                <TableCell className="pl-[22px] py-4">
+                  <span className="font-mono text-xs text-gray-400">
                     {d.deliveryId}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <p className="text-sm font-medium text-gray-900 leading-tight">
+                  <p className="text-[13.5px] font-semibold text-gray-900 leading-tight">
                     {d.customerName}
                   </p>
                   {d.customerPhone && (
-                    <p className="text-[11px] text-gray-400 mt-0.5">
+                    <p className="text-[11.5px] text-gray-400 mt-0.5">
                       {d.customerPhone}
                     </p>
                   )}
                 </TableCell>
                 <TableCell className="max-w-[160px]">
-                  <p className="text-sm text-gray-600 truncate">
+                  <p className="text-[13px] text-gray-600 truncate">
                     {d.dropoffLocation}
                   </p>
                 </TableCell>
                 <TableCell>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-[13px] text-gray-600">
                     {d.assignedRiderName ?? (
                       <span className="text-gray-300">Unassigned</span>
                     )}
                   </p>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm text-gray-600">{d.deliveryDate}</span>
+                  <span className="text-[13px] text-gray-600">{d.deliveryDate}</span>
                 </TableCell>
                 <TableCell>
                   <span className="font-mono text-[11px] text-gray-500">
@@ -148,7 +148,7 @@ export function DeliveryTable({ deliveries }: Props) {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="text-[11px] text-gray-500">
+                  <span className="text-[13px] tabular-nums text-gray-600">
                     {d.distance != null ? `${d.distance} km` : "—"}
                   </span>
                 </TableCell>
@@ -157,7 +157,7 @@ export function DeliveryTable({ deliveries }: Props) {
                 </TableCell>
                 <TableCell
                   onClick={(e) => e.stopPropagation()}
-                  className="pr-3"
+                  className="pr-4"
                 >
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Link

@@ -18,7 +18,7 @@ export default function NewStaffPage() {
           <ChevronLeft className="h-4 w-4" />
           Back to staff
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">Add Staff Member</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-gray-900">Add Staff Member</h1>
         <p className="text-sm text-gray-400 mt-1">They will receive an email to set their password.</p>
       </div>
       <StaffForm />

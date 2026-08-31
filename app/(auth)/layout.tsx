@@ -8,7 +8,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left panel — dark brand side */}
-      <div className="hidden lg:flex flex-col bg-zinc-900 text-white p-10 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col bg-gradient-to-br from-[#141416] via-[#0a0a0c] to-[#1a0d0d] text-white p-14 relative overflow-hidden">
         {/* Delivery-themed SVG illustration */}
         <div className="absolute inset-0 opacity-20 pointer-events-none select-none">
           <svg width="100%" height="100%" viewBox="0 0 600 700" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -96,16 +96,18 @@ export default function AuthLayout({
         </div>
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 relative">
-          <Image src="/logo.png" alt="Drop" width={32} height={32} className="rounded-lg" />
-          <span className="font-semibold text-base tracking-tight">Drop</span>
+        <div className="flex items-center gap-3 relative">
+          <div className="w-9 h-9 rounded-[10px] bg-red-800 flex items-center justify-center shadow-[0_4px_14px_rgba(153,27,27,0.5)] shrink-0">
+            <Image src="/logo.png" alt="" width={18} height={18} className="rounded-[4px]" />
+          </div>
+          <span className="font-bold text-lg tracking-tight">Drop</span>
         </div>
 
         {/* Quote */}
         <div className="mt-auto relative">
           <blockquote>
-            <p className="text-lg leading-relaxed text-zinc-100">
-              &ldquo;Every delivery is a promise we keep — connecting riders, customers, and businesses with speed and precision that drives our company forward.&rdquo;
+            <p className="text-[22px] leading-[1.5] font-medium tracking-tight text-zinc-100 max-w-md">
+              &ldquo;Every delivery is a promise we keep — connecting riders, customers, and businesses with speed and precision.&rdquo;
             </p>
           </blockquote>
         </div>
@@ -115,8 +117,10 @@ export default function AuthLayout({
       <div className="flex flex-col items-center justify-center px-6 py-12 bg-white">
         {/* Mobile logo */}
         <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-          <Image src="/logo.png" alt="Drop" width={32} height={32} className="rounded-lg" />
-          <span className="font-semibold text-base tracking-tight text-gray-900">Drop</span>
+          <div className="w-8 h-8 rounded-[9px] bg-red-800 flex items-center justify-center shrink-0">
+            <Image src="/logo.png" alt="" width={16} height={16} className="rounded-[3px]" />
+          </div>
+          <span className="font-bold text-base tracking-tight text-gray-900">Drop</span>
         </div>
         <div className="w-full max-w-sm">
           {children}

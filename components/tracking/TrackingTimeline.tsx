@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Truck } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DeliveryStop } from "@/types/stop";
 
@@ -15,40 +15,39 @@ export function TrackingTimeline({ stops }: Props) {
         const isLast = i === stops.length - 1;
 
         return (
-          <div key={stop.id} className="flex gap-4">
+          <div key={stop.id} className="flex gap-3.5">
             {/* Icon + connector line */}
             <div className="flex flex-col items-center shrink-0">
-              <div className="mt-0.5 relative">
-                {isCompleted ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                ) : isActive ? (
-                  <div className="relative">
-                    <Truck className="h-5 w-5 text-blue-500" />
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-                  </div>
-                ) : (
-                  <Circle className="h-5 w-5 text-gray-200" />
-                )}
-              </div>
+              {isCompleted ? (
+                <div className="w-[26px] h-[26px] rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-[13px] w-[13px] text-white" strokeWidth={3} />
+                </div>
+              ) : isActive ? (
+                <div className="w-[26px] h-[26px] rounded-full bg-white border-[2.5px] border-blue-500 flex items-center justify-center shrink-0">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                </div>
+              ) : (
+                <div className="w-[26px] h-[26px] rounded-full bg-gray-100 border-2 border-gray-200 shrink-0" />
+              )}
               {!isLast && (
                 <div
                   className={cn(
-                    "w-px flex-1 mt-1.5 mb-1 min-h-[28px]",
-                    isCompleted ? "bg-green-200" : "bg-gray-100"
+                    "w-[2px] flex-1 my-1 min-h-[28px] rounded-full",
+                    isCompleted ? "bg-green-500" : "bg-gray-200"
                   )}
                 />
               )}
             </div>
 
             {/* Content */}
-            <div className="pb-5 min-w-0 flex-1">
+            <div className="pb-[22px] min-w-0 flex-1">
               <p
                 className={cn(
-                  "text-sm font-medium leading-tight",
+                  "text-[13.5px] font-bold leading-tight",
                   isCompleted
-                    ? "text-green-700"
+                    ? "text-gray-900"
                     : isActive
-                    ? "text-blue-700"
+                    ? "text-gray-900"
                     : "text-gray-400"
                 )}
               >
@@ -56,7 +55,6 @@ export function TrackingTimeline({ stops }: Props) {
               </p>
               {isCompleted && stop.arrivedAt && (
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Delivered at{" "}
                   {new Date(stop.arrivedAt).toLocaleTimeString("en-GB", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -74,8 +72,8 @@ export function TrackingTimeline({ stops }: Props) {
                 </a>
               )}
               {isActive && (
-                <p className="text-xs text-blue-500 mt-0.5 font-medium">
-                  On the way…
+                <p className="text-xs text-blue-600 mt-0.5 font-semibold">
+                  Rider en route
                 </p>
               )}
               {stop.distanceKm != null && (

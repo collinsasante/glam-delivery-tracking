@@ -9,11 +9,6 @@ import { SignInForm } from "@/components/auth/SignInForm";
 export const metadata: Metadata = { title: "Sign In" };
 
 export default async function SignInPage() {
-  console.log("[signin] page rendering, env check:", {
-    AUTH_SECRET: !!process.env.AUTH_SECRET,
-    FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
-    NEXT_PUBLIC_FIREBASE_API_KEY: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  });
   const session = await auth();
   if (session) {
     const user = session.user as SessionPayload;
@@ -21,16 +16,20 @@ export default async function SignInPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Sign in</h2>
-        <p className="text-sm text-gray-500 mt-1">Enter your credentials below to sign in</p>
+        <h2 className="text-[26px] font-bold tracking-tight text-gray-900">Sign in</h2>
+        <p className="text-sm text-gray-400 mt-2">Enter your credentials below to sign in</p>
       </div>
       <SignInForm />
-      <p className="text-center text-xs text-gray-400">
-        Track deliveries in real-time →{" "}
-        <a href="/board" className="text-red-800 hover:underline font-medium">
-          Live Board
+      <div className="flex items-center gap-3 pt-2">
+        <div className="flex-1 h-px bg-gray-100" />
+        <span className="text-[11.5px] text-gray-300">Track a delivery instead?</span>
+        <div className="flex-1 h-px bg-gray-100" />
+      </div>
+      <p className="text-center">
+        <a href="/board" className="text-[13px] text-red-800 hover:text-red-900 font-semibold">
+          Go to Live Board →
         </a>
       </p>
     </div>

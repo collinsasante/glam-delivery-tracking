@@ -28,22 +28,18 @@ export default async function RiderLayout({
   }
 
   return (
-    <div className="min-h-full bg-gray-50">
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+    <div className="min-h-full bg-[#f6f6f8]">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-black/[0.06]">
+        <div className="max-w-lg mx-auto px-5 h-[64px] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image
-              src="/logo.png"
-              alt="Drop"
-              width={24}
-              height={24}
-              className="rounded-md shrink-0"
-            />
+            <div className="w-8 h-8 rounded-[9px] bg-red-800 flex items-center justify-center shadow-[0_2px_8px_rgba(153,27,27,0.35)] shrink-0">
+              <Image src="/logo.png" alt="" width={16} height={16} className="rounded-[3px]" />
+            </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">
+              <p className="text-[13.5px] font-bold text-gray-900 leading-tight">
                 {user.name}
               </p>
-              <p className="text-[10px] text-gray-400 font-mono">
+              <p className="text-[11px] text-gray-400 font-mono mt-0.5">
                 {user.riderId ?? "Rider"}
               </p>
             </div>
@@ -51,16 +47,16 @@ export default async function RiderLayout({
           <form action={signOutAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100"
+              className="w-[34px] h-[34px] rounded-full bg-[#f6f6f8] flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+              aria-label="Sign out"
             >
-              <LogOut className="h-3.5 w-3.5" />
-              <span>Sign out</span>
+              <LogOut className="h-4 w-4" strokeWidth={1.8} />
             </button>
           </form>
         </div>
       </header>
       <FcmRegistration />
-      <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
+      <main className="max-w-lg mx-auto px-5 py-5">{children}</main>
     </div>
   );
 }
