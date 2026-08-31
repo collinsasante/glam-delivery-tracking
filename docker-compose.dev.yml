@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: glam
+      POSTGRES_PASSWORD: glam_dev_password
+      POSTGRES_DB: glam_delivery
+    ports:
+      - "5433:5432"
+    volumes:
+      - glam_pgdata_dev:/var/lib/postgresql/data
+
+volumes:
+  glam_pgdata_dev:

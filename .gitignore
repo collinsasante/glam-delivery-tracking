@@ -32,16 +32,18 @@ yarn-error.log*
 
 # env files — never commit secrets
 .env*
-# but do commit the example template
+# but do commit the example templates
 !.env.example
+!.env.production.example
 
 # vercel
 .vercel
 
-# cloudflare / opennext build artifacts
-/.open-next/
-/.wrangler/
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# migration script reports and local db backups — local artifacts, never committed
+/migration-report.*.json
+/image-migration-report.*.json
+/backups/

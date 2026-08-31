@@ -1,55 +1,14 @@
 #!/usr/bin/env bash
-set -e
+# Deploy the latest main branch to this VPS. Run from the app directory on the server.
+set -euo pipefail
 
-echo "▶ Building..."
-npx @opennextjs/cloudflare build
+echo "▶ Pulling latest..."
+git pull origin main
 
-echo "▶ Bundling worker into assets..."
-rm -rf .open-next/assets/server-functions \
-       .open-next/assets/.build \
-       .open-next/assets/cloudflare \
-       .open-next/assets/middleware \
-       .open-next/assets/_worker.js
+echo "▶ Building app image..."
+docker compose --env-file .env.production build app
 
-cp -r .open-next/server-functions .open-next/assets/server-functions
-cp -r .open-next/.build          .open-next/assets/.build
-cp -r .open-next/cloudflare      .open-next/assets/cloudflare
-cp -r .open-next/middleware      .open-next/assets/middleware
-cp    .open-next/worker.js       .open-next/assets/_worker.js
+echo "▶ Restarting app (db/nginx/certbot untouched)..."
+docker compose --env-file .env.production up -d --no-deps app
 
-# Tell Cloudflare Pages to serve _next/static/* and other static files
-# directly (bypass the worker). Without this, the worker intercepts them
-# and the Next.js handler returns a 404 HTML page for every JS/CSS chunk.
-cat > .open-next/assets/_routes.json << 'JSON'
-{
-  "version": 1,
-  "include": ["/*"],
-  "exclude": [
-    "/_next/static/*",
-    "/favicon.ico",
-    "/logo.png",
-    "/file.svg",
-    "/globe.svg",
-    "/next.svg",
-    "/vercel.svg",
-    "/window.svg",
-    "/firebase-messaging-sw.js"
-  ]
-}
-JSON
-
-echo "▶ Deploying to Cloudflare Pages..."
-cp wrangler.toml wrangler.toml.bak
-cat > wrangler.toml << 'TOML'
-name = "glam-delivery"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".open-next/assets"
-TOML
-
-wrangler pages deploy .open-next/assets --project-name glam-delivery
-
-cp wrangler.toml.bak wrangler.toml
-rm wrangler.toml.bak
-
-echo "✅ Done — https://glam-delivery.pages.dev"
+echo "✅ Done."
