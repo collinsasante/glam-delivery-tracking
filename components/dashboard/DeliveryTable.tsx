@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DeliveryStatusBadge } from "./DeliveryStatusBadge";
 import { deleteDeliveryAction } from "@/actions/deliveries";
 import { toast } from "sonner";
@@ -34,15 +35,21 @@ function formatTime(t: string | null) {
 
 export function DeliveryTable({ deliveries }: Props) {
   const [page, setPage] = useState(1);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const router = useRouter();
 
   const totalPages = Math.ceil(deliveries.length / PAGE_SIZE);
   const paged = deliveries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  function handleDelete(e: React.MouseEvent, id: string, name: string) {
+  function handleDeleteClick(e: React.MouseEvent, id: string, name: string) {
     e.stopPropagation();
-    if (!confirm(`Delete delivery for ${name}? This cannot be undone.`)) return;
+    setPendingDelete({ id, name });
+  }
+
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    const { id } = pendingDelete;
     startTransition(async () => {
       const result = await deleteDeliveryAction(id);
       if ("error" in result) {
@@ -50,6 +57,7 @@ export function DeliveryTable({ deliveries }: Props) {
       } else {
         toast.success("Delivery deleted");
       }
+      setPendingDelete(null);
     });
   }
 
@@ -177,7 +185,7 @@ export function DeliveryTable({ deliveries }: Props) {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={(e) => handleDelete(e, d.id, d.customerName)}
+                      onClick={(e) => handleDeleteClick(e, d.id, d.customerName)}
                       disabled={d.status === "Completed"}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -222,6 +230,15 @@ export function DeliveryTable({ deliveries }: Props) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete delivery?"
+        description={`Delete delivery for ${pendingDelete?.name}? This cannot be undone.`}
+        onConfirm={confirmDelete}
+        isPending={isPending}
+      />
     </div>
   );
 }

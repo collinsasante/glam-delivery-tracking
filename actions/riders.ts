@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { SessionPayload } from "@/lib/session";
 import { createRiderSchema, updateRiderSchema } from "@/lib/validations";
 import { adminAuth } from "@/lib/firebase-admin";
+import { getAdminAuthErrorMessage } from "@/lib/auth-errors";
 import {
   createRider,
   updateRider,
@@ -81,7 +82,7 @@ export async function createRiderAction(data: unknown): Promise<ActionResult> {
     return { success: true };
   } catch (err) {
     console.error("createRider error:", err);
-    return { error: "Failed to create account." };
+    return { error: getAdminAuthErrorMessage(err, "Failed to create account.") };
   }
 }
 
@@ -123,7 +124,7 @@ export async function updateRiderAction(
     return { success: true };
   } catch (err) {
     console.error("updateRider error:", err);
-    return { error: "Failed to update rider." };
+    return { error: getAdminAuthErrorMessage(err, "Failed to update rider.") };
   }
 }
 

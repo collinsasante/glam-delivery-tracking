@@ -1,11 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Pencil, PowerOff, Power, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { updateRiderAction, deleteRiderAction } from "@/actions/riders";
 
 interface RiderActionsProps {
@@ -25,6 +26,7 @@ export function RiderActions({ id, backPath, rider }: RiderActionsProps) {
   const router = useRouter();
   const [isTogglingActive, startToggle] = useTransition();
   const [isDeleting, startDelete] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function handleToggleActive() {
     startToggle(async () => {
@@ -46,12 +48,12 @@ export function RiderActions({ id, backPath, rider }: RiderActionsProps) {
     });
   }
 
-  function handleDelete() {
-    if (!window.confirm(`Delete ${rider.name}? This cannot be undone.`)) return;
+  function confirmDelete() {
     startDelete(async () => {
       const result = await deleteRiderAction(id);
       if ("error" in result) {
         toast.error(result.error);
+        setConfirmOpen(false);
       } else {
         toast.success("Account deleted");
         router.push(backPath);
@@ -93,7 +95,7 @@ export function RiderActions({ id, backPath, rider }: RiderActionsProps) {
         size="sm"
         variant="outline"
         className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50"
-        onClick={handleDelete}
+        onClick={() => setConfirmOpen(true)}
         disabled={isDeleting}
       >
         {isDeleting ? (
@@ -103,6 +105,15 @@ export function RiderActions({ id, backPath, rider }: RiderActionsProps) {
         )}
         Delete
       </Button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete account?"
+        description={`Delete ${rider.name}? This cannot be undone.`}
+        onConfirm={confirmDelete}
+        isPending={isDeleting}
+      />
     </div>
   );
 }

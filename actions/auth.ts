@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { signUpSchema } from "@/lib/validations";
 import { createRider, getRiderByEmail } from "@/services/riders";
 import { adminAuth } from "@/lib/firebase-admin";
+import { getAdminAuthErrorMessage } from "@/lib/auth-errors";
 import { SESSION_COOKIE } from "@/lib/session";
 
 export async function signOutAction() {
@@ -65,6 +66,6 @@ export async function signUpAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("[signUp] error:", err);
-    return { error: "Failed to create account. Please try again." };
+    return { error: getAdminAuthErrorMessage(err, "Failed to create account. Please try again.") };
   }
 }

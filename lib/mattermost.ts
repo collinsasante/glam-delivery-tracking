@@ -16,7 +16,7 @@ export async function sendMattermostNotification(text: string): Promise<void> {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, username: "Delivery Bot" }),
     });
     if (!res.ok) {
       console.error(`[mattermost] webhook returned ${res.status}: ${await res.text()}`);

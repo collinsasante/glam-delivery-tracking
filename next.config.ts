@@ -18,7 +18,12 @@ const securityHeaders = [
       `img-src 'self' data: blob: https://${cdnDomain}`,
       "font-src 'self'",
       "connect-src 'self' https://*.googleapis.com https://router.project-osrm.org https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com",
-      "frame-src 'none'",
+      // signInWithPopup() loads a hidden helper iframe from the Firebase
+      // authDomain (<project>.firebaseapp.com) to relay the OAuth result back
+      // to this page — without this, the popup opens but the CSP blocks the
+      // iframe and the sign-in silently fails with auth/unauthorized-domain-
+      // looking symptoms even once the domain itself is authorized.
+      "frame-src https://*.firebaseapp.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

@@ -1,19 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase-client";
+import { getSignInErrorMessage, getPasswordResetErrorMessage, isSignInCancelled } from "@/lib/auth-errors";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export function SignInForm() {
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [isGooglePending, setIsGooglePending] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotPending, setForgotPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  async function establishSession(idToken: string) {
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error ?? "Sign in failed");
+      return;
+    }
+
+    const { role } = await res.json();
+    router.push(role === "Admin" ? "/dashboard" : "/rider");
+  }
+
+  async function handleGoogleSignIn() {
+    setError("");
+    setIsGooglePending(true);
+    try {
+      const cred = await signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+      await establishSession(await cred.user.getIdToken());
+    } catch (err) {
+      if (!isSignInCancelled(err)) {
+        console.error("[googleSignIn] error:", err);
+        setError(getSignInErrorMessage(err));
+      }
+    } finally {
+      setIsGooglePending(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,25 +63,10 @@ export function SignInForm() {
 
     try {
       const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
-      const idToken = await cred.user.getIdToken();
-
-      const res = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error ?? "Sign in failed");
-        return;
-      }
-
-      const { role } = await res.json();
-      router.push(role === "Admin" ? "/dashboard" : "/rider");
+      await establishSession(await cred.user.getIdToken());
     } catch (err) {
       console.error("[signIn] error:", err);
-      setError(err instanceof Error ? err.message : "Invalid email or password");
+      setError(getSignInErrorMessage(err));
     } finally {
       setIsPending(false);
     }
@@ -58,7 +80,7 @@ export function SignInForm() {
       setForgotSent(true);
     } catch (err) {
       console.error("[forgotPassword] error:", err);
-      setError("Could not send reset email. Check the address and try again.");
+      setError(getPasswordResetErrorMessage(err));
       setShowForgot(false);
     } finally {
       setForgotPending(false);
@@ -150,15 +172,26 @@ export function SignInForm() {
             Forgot?
           </button>
         </div>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          required
-          autoComplete="current-password"
-          className="w-full h-11 rounded-xl border-[1.5px] border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 px-4 text-sm focus:outline-none focus:ring-[3.5px] focus:ring-black/[0.06] focus:border-gray-900 transition"
-        />
+        <div className="relative">
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            required
+            autoComplete="current-password"
+            className="w-full h-11 rounded-xl border-[1.5px] border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 pl-4 pr-11 text-sm focus:outline-none focus:ring-[3.5px] focus:ring-black/[0.06] focus:border-gray-900 transition"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            tabIndex={-1}
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 pt-1">
@@ -186,6 +219,29 @@ export function SignInForm() {
         ) : (
           "Sign in"
         )}
+      </button>
+
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-2 text-gray-400">or</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={isGooglePending}
+        className="w-full h-12 flex items-center justify-center gap-2.5 rounded-xl border-[1.5px] border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 font-semibold text-[14.5px] transition"
+      >
+        {isGooglePending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <GoogleIcon className="h-4 w-4" />
+        )}
+        Continue with Google
       </button>
     </form>
   );

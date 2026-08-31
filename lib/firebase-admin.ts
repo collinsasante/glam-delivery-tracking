@@ -50,6 +50,27 @@ function adminUrl(path: string): string {
   return `https://identitytoolkit.googleapis.com/v1/projects/${projectId()}/accounts${path}`;
 }
 
+/** Normalizes Identity Toolkit's raw error strings (e.g. "WEAK_PASSWORD : ...")
+ *  into the same "auth/xxx" shape the client SDK uses, so callers can share
+ *  one error-message mapping (see lib/auth-errors.ts) regardless of which
+ *  Firebase surface threw. */
+function toAuthErrorCode(rawMessage: string): string {
+  const key = rawMessage.split(":")[0].trim();
+  const known: Record<string, string> = {
+    EMAIL_EXISTS: "auth/email-already-exists",
+    INVALID_EMAIL: "auth/invalid-email",
+    WEAK_PASSWORD: "auth/weak-password",
+    EMAIL_NOT_FOUND: "auth/user-not-found",
+  };
+  return known[key] ?? "auth/unknown";
+}
+
+async function throwAdminError(res: Response, fallbackMessage: string): Promise<never> {
+  const err = (await res.json().catch(() => null)) as { error?: { message: string } } | null;
+  const rawMessage = err?.error?.message ?? fallbackMessage;
+  throw Object.assign(new Error(rawMessage), { code: toAuthErrorCode(rawMessage) });
+}
+
 export const adminAuth = {
   /** Verify a Firebase ID token using jose + Google JWKS */
   async verifyIdToken(idToken: string): Promise<{ uid: string; email: string }> {
@@ -76,10 +97,7 @@ export const adminAuth = {
         displayName: props.displayName,
       }),
     });
-    if (!res.ok) {
-      const err = (await res.json()) as { error: { message: string } };
-      throw new Error(err.error?.message ?? "createUser failed");
-    }
+    if (!res.ok) return throwAdminError(res, "createUser failed");
     const data = (await res.json()) as { localId: string };
     return { uid: data.localId };
   },
@@ -110,7 +128,7 @@ export const adminAuth = {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ localId: uid, ...props }),
     });
-    if (!res.ok) throw new Error("updateUser failed");
+    if (!res.ok) return throwAdminError(res, "updateUser failed");
   },
 
   /** Delete a Firebase Auth user */
@@ -135,10 +153,7 @@ export const adminAuth = {
         body: JSON.stringify({ requestType: "PASSWORD_RESET", email }),
       }
     );
-    if (!res.ok) {
-      const err = (await res.json()) as { error: { message: string } };
-      throw new Error(err.error?.message ?? "sendPasswordResetEmail failed");
-    }
+    if (!res.ok) return throwAdminError(res, "sendPasswordResetEmail failed");
   },
 
   /** Generate a password reset link (used when sending branded invite emails via Resend) */
@@ -152,10 +167,7 @@ export const adminAuth = {
         body: JSON.stringify({ requestType: "PASSWORD_RESET", email, returnOobLink: true }),
       }
     );
-    if (!res.ok) {
-      const err = (await res.json()) as { error: { message: string } };
-      throw new Error(err.error?.message ?? "generatePasswordResetLink failed");
-    }
+    if (!res.ok) return throwAdminError(res, "generatePasswordResetLink failed");
     const data = (await res.json()) as { oobLink: string };
     return data.oobLink;
   },
