@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 
 export default async function HomePage() {
-  console.log("[page] / hit — calling auth()");
   const session = await auth();
 
   if (!session) redirect("/signin");

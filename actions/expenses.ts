@@ -9,6 +9,8 @@ import {
   updateExpenseStatus,
   deleteExpense,
 } from "@/services/expenses";
+import { getRiderById } from "@/services/riders";
+import { sendMattermostNotification } from "@/lib/mattermost";
 import type { Expense } from "@/types/expense";
 
 type ActionResult = { success: true } | { error: string };
@@ -29,7 +31,13 @@ export async function createExpenseAction(data: unknown): Promise<ActionResult> 
   }
 
   try {
-    await createExpense({ riderId, ...parsed.data });
+    const expense = await createExpense({ riderId, ...parsed.data });
+
+    const rider = await getRiderById(riderId).catch(() => null);
+    void sendMattermostNotification(
+      `🧾 **New expense submitted** — ${rider?.name ?? "A rider"} · ${expense.expenseType} · GH₵${expense.amount.toFixed(2)}`
+    );
+
     revalidatePath("/rider/expenses");
     revalidatePath("/dashboard/expenses");
     return { success: true };

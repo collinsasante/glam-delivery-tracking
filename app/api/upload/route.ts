@@ -1,37 +1,43 @@
 import { type NextRequest } from "next/server";
+import { randomUUID } from "node:crypto";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { auth } from "@/auth";
+import { s3, S3_BUCKET_NAME, publicUrlForKey } from "@/lib/s3";
 
 export const dynamic = "force-dynamic";
 
-const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME ?? process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
-const UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET ?? process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? "";
+const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const EXT_BY_CONTENT_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+  if (!S3_BUCKET_NAME) {
     return Response.json({ error: "Image upload not configured" }, { status: 500 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
-  if (!file || !(file instanceof Blob)) {
-    return Response.json({ error: "No file provided" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const contentType = body?.contentType;
+  if (typeof contentType !== "string" || !ALLOWED_CONTENT_TYPES.has(contentType)) {
+    return Response.json({ error: "Unsupported file type" }, { status: 400 });
   }
 
-  const upload = new FormData();
-  upload.append("file", file);
-  upload.append("upload_preset", UPLOAD_PRESET);
-  upload.append("folder", "drop/receipts");
+  const ext = EXT_BY_CONTENT_TYPE[contentType];
+  const key = `receipts/${session.user.id}/${randomUUID()}.${ext}`;
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: "POST",
-    body: upload,
+  const command = new PutObjectCommand({
+    Bucket: S3_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
   });
+  const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 60 });
 
-  if (!res.ok) return Response.json({ error: "Upload failed" }, { status: 500 });
-
-  const data = await res.json();
-  return Response.json({ url: data.secure_url });
+  return Response.json({ uploadUrl, publicUrl: publicUrlForKey(key) });
 }

@@ -1,69 +1,36 @@
 import "server-only";
-import {
-  airtableList,
-  airtableGet,
-  airtableCreate,
-  airtableUpdate,
-  airtableDelete,
-  escapeAirtableValue,
-} from "@/lib/airtable";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { db, type Executor } from "@/lib/db/client";
+import { deliveries } from "@/lib/db/schema";
 import type { Delivery, DeliveryStatus } from "@/types/delivery";
 
-interface DeliveryFields {
-  "Delivery ID": string;
-  "Order ID": string;
-  "Customer Name": string;
-  "Customer Phone"?: string;
-  "Dropoff Location": string;
-  "Dropoff Coordinates"?: string;
-  "Assigned Rider"?: string[];
-  Warehouse: string;
-  Status: DeliveryStatus;
-  Priority: string;
-  "Created Date"?: string;
-  "Delivery Date": string;
-  "Pickup Time"?: string;
-  "Delivery Time"?: string;
-  "Completed Date"?: string;
-  Notes?: string;
-  "Rider Comment"?: string;
-  Distance?: number;
-}
+type DeliveryRow = typeof deliveries.$inferSelect;
 
-function parseCoords(
-  str?: string
-): { lat: number; lng: number } | null {
-  if (!str) return null;
-  const [lat, lng] = str.split(",").map(Number);
-  if (isNaN(lat) || isNaN(lng)) return null;
-  return { lat, lng };
-}
-
-function mapToDelivery(
-  record: { id: string; fields: DeliveryFields; createdTime: string }
-): Delivery {
-  const f = record.fields;
+function mapToDelivery(row: DeliveryRow): Delivery {
   return {
-    id: record.id,
-    deliveryId: f["Delivery ID"] ?? "",
-    orderId: f["Order ID"] ?? "",
-    customerName: f["Customer Name"] ?? "",
-    customerPhone: f["Customer Phone"] ?? null,
-    dropoffLocation: f["Dropoff Location"] ?? "",
-    dropoffCoordinates: parseCoords(f["Dropoff Coordinates"]),
-    assignedRiderId: f["Assigned Rider"]?.[0] ?? null,
+    id: String(row.id),
+    deliveryId: row.deliveryCode,
+    orderId: row.orderId,
+    customerName: row.customerName,
+    customerPhone: row.customerPhone ?? null,
+    dropoffLocation: row.dropoffLocation,
+    dropoffCoordinates:
+      row.dropoffLat != null && row.dropoffLng != null
+        ? { lat: row.dropoffLat, lng: row.dropoffLng }
+        : null,
+    assignedRiderId: row.assignedRiderId != null ? String(row.assignedRiderId) : null,
     assignedRiderName: null,
-    warehouse: (f["Warehouse"] as Delivery["warehouse"]) ?? "Pantang West",
-    status: f["Status"] ?? "Pending",
-    priority: (f["Priority"] as Delivery["priority"]) ?? "Normal",
-    createdAt: f["Created Date"] ?? record.createdTime,
-    deliveryDate: f["Delivery Date"] ?? "",
-    pickupTime: f["Pickup Time"] ?? null,
-    deliveryTime: f["Delivery Time"] ?? null,
-    notes: f["Notes"] ?? null,
-    riderComment: f["Rider Comment"] ?? null,
-    completedDate: f["Completed Date"] ?? null,
-    distance: f["Distance"] ?? null,
+    warehouse: row.warehouse,
+    status: row.status,
+    priority: row.priority,
+    createdAt: row.createdDate.toISOString(),
+    deliveryDate: row.deliveryDate,
+    pickupTime: row.pickupTime ?? null,
+    deliveryTime: row.deliveryTime ?? null,
+    notes: row.notes ?? null,
+    riderComment: row.riderComment ?? null,
+    completedDate: row.completedDate ?? null,
+    distance: row.distanceKm != null ? Number(row.distanceKm) : null,
   };
 }
 
@@ -74,147 +41,138 @@ export interface DeliveryFilters {
   search?: string;
 }
 
-export async function getDeliveries(
-  filters: DeliveryFilters = {}
-): Promise<Delivery[]> {
-  const conditions: string[] = [];
+export async function getDeliveries(filters: DeliveryFilters = {}): Promise<Delivery[]> {
+  const conditions = [];
 
   if (filters.status && filters.status !== "All") {
-    conditions.push(`{Status} = "${escapeAirtableValue(filters.status)}"`);
+    conditions.push(eq(deliveries.status, filters.status));
+  }
+
+  if (filters.riderId) {
+    const riderPk = Number(filters.riderId);
+    if (Number.isInteger(riderPk)) conditions.push(eq(deliveries.assignedRiderId, riderPk));
   }
 
   if (filters.date === "today") {
-    conditions.push(`IS_SAME({Delivery Date}, TODAY(), "day")`);
+    conditions.push(sql`${deliveries.deliveryDate} = CURRENT_DATE`);
   } else if (filters.date === "week") {
-    conditions.push(`IS_SAME({Delivery Date}, TODAY(), "week")`);
+    conditions.push(
+      sql`date_trunc('week', ${deliveries.deliveryDate}) = date_trunc('week', CURRENT_DATE)`
+    );
   } else if (filters.date === "month") {
-    conditions.push(`IS_SAME({Delivery Date}, TODAY(), "month")`);
-  }
-
-  const filterByFormula =
-    conditions.length > 1
-      ? `AND(${conditions.join(", ")})`
-      : conditions[0] ?? "";
-
-  const params: { filterByFormula?: string } = {};
-  if (filterByFormula) params.filterByFormula = filterByFormula;
-
-  const records = await airtableList<DeliveryFields>("Deliveries", { ...params, maxRecords: "500" });
-
-  // Sort by Airtable record creation time descending (newest first)
-  records.sort(
-    (a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
-  );
-
-  let deliveries = records.map(mapToDelivery);
-
-  if (filters.riderId) {
-    deliveries = deliveries.filter((d) => d.assignedRiderId === filters.riderId);
-  }
-
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    deliveries = deliveries.filter(
-      (d) =>
-        d.orderId.toLowerCase().includes(q) ||
-        d.customerName.toLowerCase().includes(q) ||
-        d.dropoffLocation.toLowerCase().includes(q)
+    conditions.push(
+      sql`date_trunc('month', ${deliveries.deliveryDate}) = date_trunc('month', CURRENT_DATE)`
     );
   }
 
-  return deliveries;
+  if (filters.search) {
+    const q = `%${filters.search}%`;
+    conditions.push(
+      or(
+        ilike(deliveries.orderId, q),
+        ilike(deliveries.customerName, q),
+        ilike(deliveries.dropoffLocation, q)
+      )
+    );
+  }
+
+  const rows = await db
+    .select()
+    .from(deliveries)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(deliveries.createdAt));
+
+  return rows.map(mapToDelivery);
 }
 
 export async function getDeliveryById(id: string): Promise<Delivery | null> {
-  // id can be either the Airtable record ID or the "DEL-001-A" display ID
-  const isRecordId = id.startsWith("rec");
+  const pk = Number(id);
+  if (!Number.isInteger(pk)) return null;
+  const [row] = await db.select().from(deliveries).where(eq(deliveries.id, pk)).limit(1);
+  return row ? mapToDelivery(row) : null;
+}
 
-  try {
-    if (isRecordId) {
-      const record = await airtableGet<DeliveryFields>("Deliveries", id);
-      return mapToDelivery(record);
-    }
-
-    const records = await airtableList<DeliveryFields>("Deliveries", {
-      filterByFormula: `{Delivery ID} = "${escapeAirtableValue(id)}"`,
-      maxRecords: "1",
-    });
-    return records[0] ? mapToDelivery(records[0]) : null;
-  } catch {
-    return null;
-  }
+export async function getDeliveryByCode(code: string): Promise<Delivery | null> {
+  const [row] = await db
+    .select()
+    .from(deliveries)
+    .where(eq(deliveries.deliveryCode, code))
+    .limit(1);
+  return row ? mapToDelivery(row) : null;
 }
 
 export async function getDeliveriesForRider(riderId: string): Promise<Delivery[]> {
   return getDeliveries({ riderId });
 }
 
-export async function getNextDeliveryNumber(): Promise<number> {
-  const records = await airtableList<DeliveryFields>("Deliveries", { maxRecords: "500" });
-  if (!records.length) return 1;
-  let max = 0;
-  for (const r of records) {
-    const match = (r.fields["Delivery ID"] ?? "").match(/DEL-(\d+)/);
-    if (match) max = Math.max(max, parseInt(match[1], 10));
-  }
-  return max + 1;
+/** Atomically reserves the next delivery number (backs the DEL-NNN / DEL-NNN-A/B/C codes). */
+export async function getNextDeliveryNumber(tx: Executor = db): Promise<number> {
+  const [{ val }] = await tx.execute<{ val: string }>(sql`SELECT nextval('delivery_code_seq') AS val`);
+  return Number(val);
 }
 
-export async function createDeliveryRecord(fields: {
-  deliveryId: string;
-  orderId: string;
-  customerName: string;
-  customerPhone?: string;
-  dropoffLocation: string;
-  dropoffCoordinates?: string;
-  assignedRiderId?: string;
-  warehouse: string;
-  priority: string;
-  deliveryDate: string;
-  notes?: string;
-  distanceKm?: number;
-}): Promise<Delivery> {
-  const record = await airtableCreate<DeliveryFields>("Deliveries", {
-    "Delivery ID": fields.deliveryId,
-    "Order ID": fields.orderId,
-    "Customer Name": fields.customerName,
-    ...(fields.customerPhone && { "Customer Phone": fields.customerPhone }),
-    "Dropoff Location": fields.dropoffLocation,
-    ...(fields.dropoffCoordinates && {
-      "Dropoff Coordinates": fields.dropoffCoordinates,
-    }),
-    ...(fields.assignedRiderId && {
-      "Assigned Rider": [fields.assignedRiderId],
-    }),
-    Warehouse: fields.warehouse,
-    Status: "Pending",
-    Priority: fields.priority,
-    "Delivery Date": fields.deliveryDate,
-    ...(fields.notes && { Notes: fields.notes }),
-    ...(fields.distanceKm !== undefined && { Distance: fields.distanceKm }),
-  });
-  return mapToDelivery(record);
+export async function createDeliveryRecord(
+  fields: {
+    deliveryId: string;
+    orderId: string;
+    customerName: string;
+    customerPhone?: string;
+    dropoffLocation: string;
+    dropoffCoordinates?: string;
+    assignedRiderId?: string;
+    warehouse: string;
+    priority: string;
+    deliveryDate: string;
+    notes?: string;
+    distanceKm?: number;
+  },
+  tx: Executor = db
+): Promise<Delivery> {
+  const coords = fields.dropoffCoordinates
+    ? fields.dropoffCoordinates.split(",").map(Number)
+    : undefined;
+
+  const [row] = await tx
+    .insert(deliveries)
+    .values({
+      deliveryCode: fields.deliveryId,
+      orderId: fields.orderId,
+      customerName: fields.customerName,
+      customerPhone: fields.customerPhone,
+      dropoffLocation: fields.dropoffLocation,
+      dropoffLat: coords && !Number.isNaN(coords[0]) ? coords[0] : undefined,
+      dropoffLng: coords && !Number.isNaN(coords[1]) ? coords[1] : undefined,
+      assignedRiderId: fields.assignedRiderId ? Number(fields.assignedRiderId) : undefined,
+      warehouse: fields.warehouse as DeliveryRow["warehouse"],
+      status: "Pending",
+      priority: fields.priority as DeliveryRow["priority"],
+      deliveryDate: fields.deliveryDate,
+      notes: fields.notes,
+      distanceKm: fields.distanceKm !== undefined ? String(fields.distanceKm) : undefined,
+    })
+    .returning();
+  return mapToDelivery(row);
 }
 
 export async function updateDeliveryStatus(
   id: string,
   status: DeliveryStatus,
-  extra?: { pickupTime?: string; deliveryTime?: string }
+  extra?: { pickupTime?: string; deliveryTime?: string },
+  tx: Executor = db
 ): Promise<void> {
-  const fields: Record<string, unknown> = { Status: status };
-  if (extra?.pickupTime) fields["Pickup Time"] = extra.pickupTime;
-  if (extra?.deliveryTime) fields["Delivery Time"] = extra.deliveryTime;
-  await airtableUpdate("Deliveries", id, fields);
-  // Write Completed Date separately so a missing field never blocks the status update
-  if (status === "Completed") {
-    try {
-      await airtableUpdate("Deliveries", id, {
-        "Completed Date": new Date().toISOString().split("T")[0],
-      });
-    } catch {
-      // Completed Date field not yet added to Airtable — skip
-    }
-  }
+  const pk = Number(id);
+  await tx
+    .update(deliveries)
+    .set({
+      status,
+      ...(extra?.pickupTime && { pickupTime: extra.pickupTime }),
+      ...(extra?.deliveryTime && { deliveryTime: extra.deliveryTime }),
+      ...(status === "Completed" && {
+        completedDate: new Date().toISOString().split("T")[0],
+      }),
+      updatedAt: new Date(),
+    })
+    .where(eq(deliveries.id, pk));
 }
 
 export async function updateDelivery(
@@ -232,24 +190,45 @@ export async function updateDelivery(
     notes: string;
     riderComment: string;
     distance: number;
-  }>
+  }>,
+  tx: Executor = db
 ): Promise<void> {
-  const airtableFields: Record<string, unknown> = {};
-  if (fields.orderId !== undefined) airtableFields["Order ID"] = fields.orderId;
-  if (fields.customerName !== undefined) airtableFields["Customer Name"] = fields.customerName;
-  if (fields.customerPhone !== undefined) airtableFields["Customer Phone"] = fields.customerPhone;
-  if (fields.dropoffLocation !== undefined) airtableFields["Dropoff Location"] = fields.dropoffLocation;
-  if (fields.dropoffCoordinates !== undefined) airtableFields["Dropoff Coordinates"] = fields.dropoffCoordinates;
-  if (fields.assignedRiderId !== undefined) airtableFields["Assigned Rider"] = [fields.assignedRiderId];
-  if (fields.warehouse !== undefined) airtableFields["Warehouse"] = fields.warehouse;
-  if (fields.priority !== undefined) airtableFields["Priority"] = fields.priority;
-  if (fields.deliveryDate !== undefined) airtableFields["Delivery Date"] = fields.deliveryDate;
-  if (fields.notes !== undefined) airtableFields["Notes"] = fields.notes;
-  if (fields.riderComment !== undefined) airtableFields["Rider Comment"] = fields.riderComment;
-  if (fields.distance !== undefined) airtableFields["Distance"] = fields.distance;
-  await airtableUpdate("Deliveries", id, airtableFields);
+  const pk = Number(id);
+  const coords = fields.dropoffCoordinates
+    ? fields.dropoffCoordinates.split(",").map(Number)
+    : undefined;
+
+  await tx
+    .update(deliveries)
+    .set({
+      ...(fields.orderId !== undefined && { orderId: fields.orderId }),
+      ...(fields.customerName !== undefined && { customerName: fields.customerName }),
+      ...(fields.customerPhone !== undefined && { customerPhone: fields.customerPhone }),
+      ...(fields.dropoffLocation !== undefined && { dropoffLocation: fields.dropoffLocation }),
+      ...(coords && {
+        dropoffLat: !Number.isNaN(coords[0]) ? coords[0] : null,
+        dropoffLng: !Number.isNaN(coords[1]) ? coords[1] : null,
+      }),
+      ...(fields.assignedRiderId !== undefined && {
+        assignedRiderId: Number(fields.assignedRiderId),
+      }),
+      ...(fields.warehouse !== undefined && {
+        warehouse: fields.warehouse as DeliveryRow["warehouse"],
+      }),
+      ...(fields.priority !== undefined && {
+        priority: fields.priority as DeliveryRow["priority"],
+      }),
+      ...(fields.deliveryDate !== undefined && { deliveryDate: fields.deliveryDate }),
+      ...(fields.notes !== undefined && { notes: fields.notes }),
+      ...(fields.riderComment !== undefined && { riderComment: fields.riderComment }),
+      ...(fields.distance !== undefined && { distanceKm: String(fields.distance) }),
+      updatedAt: new Date(),
+    })
+    .where(eq(deliveries.id, pk));
 }
 
-export async function deleteDelivery(id: string): Promise<void> {
-  await airtableDelete("Deliveries", id);
+export async function deleteDelivery(id: string, tx: Executor = db): Promise<void> {
+  const pk = Number(id);
+  // delivery_stops rows cascade-delete via the FK — no separate cleanup needed.
+  await tx.delete(deliveries).where(eq(deliveries.id, pk));
 }

@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN ?? "";
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -13,9 +15,9 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com",
       "worker-src 'self'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://res.cloudinary.com",
+      `img-src 'self' data: blob: https://${cloudfrontDomain}`,
       "font-src 'self'",
-      "connect-src 'self' https://*.airtable.com https://*.googleapis.com https://router.project-osrm.org https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com",
+      "connect-src 'self' https://*.googleapis.com https://router.project-osrm.org https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -25,21 +27,19 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   turbopack: {
     root: __dirname,
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      {
-        // Airtable attachment CDN (receipt photos uploaded directly to Airtable)
-        protocol: "https",
-        hostname: "*.airtableusercontent.com",
-      },
-    ],
+    remotePatterns: cloudfrontDomain
+      ? [
+          {
+            protocol: "https",
+            hostname: cloudfrontDomain,
+          },
+        ]
+      : [],
   },
   async headers() {
     return [

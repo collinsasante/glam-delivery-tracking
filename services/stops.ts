@@ -1,125 +1,107 @@
 import "server-only";
-import { airtableList, airtableCreate, airtableUpdate, escapeAirtableValue } from "@/lib/airtable";
+import { asc, eq, inArray } from "drizzle-orm";
+import { db, type Executor } from "@/lib/db/client";
+import { deliveryStops } from "@/lib/db/schema";
 import type { DeliveryStop } from "@/types/stop";
 
-interface StopFields {
-  Delivery?: string[];
-  "Stop Number"?: number;
-  "From Location"?: string;
-  "To Location"?: string;
-  "Dropoff Location"?: string;
-  "Distance (km)"?: number;
-  "Planned Distance"?: string;
-  "Started Time"?: string;
-  "Arrived Time"?: string;
-  "Duration (mins)"?: number;
-  Status?: string;
-  "Start GPS"?: string;
-  "Rider GPS"?: string;
-  "Rider IP"?: string;
-}
+type StopRow = typeof deliveryStops.$inferSelect;
 
-function parseGps(
-  str?: string
-): { lat: number; lng: number } | null {
-  if (!str) return null;
-  const [lat, lng] = str.split(",").map((s) => parseFloat(s.trim()));
-  if (isNaN(lat) || isNaN(lng)) return null;
-  return { lat, lng };
-}
-
-function mapToStop(
-  record: { id: string; fields: StopFields }
-): DeliveryStop {
-  const f = record.fields;
+function mapToStop(row: StopRow): DeliveryStop {
   return {
-    id: record.id,
-    deliveryRecordId: f["Delivery"]?.[0] ?? "",
-    stopNumber: f["Stop Number"] ?? 1,
-    fromLocation: f["From Location"] ?? "",
-    toLocation: f["To Location"] ?? "",
-    dropoffLocation: f["Dropoff Location"] ?? "",
-    distanceKm: f["Distance (km)"] ?? null,
-    plannedDistanceKm: f["Planned Distance"] ? parseFloat(f["Planned Distance"]) || null : null,
-    startedAt: f["Started Time"] ?? null,
-    arrivedAt: f["Arrived Time"] ?? null,
-    durationMins: f["Duration (mins)"] ?? null,
-    status: (f["Status"] as DeliveryStop["status"]) ?? "Pending",
-    startGps: parseGps(f["Start GPS"]),
-    riderGps: parseGps(f["Rider GPS"]),
-    riderIp: f["Rider IP"] ?? null,
+    id: String(row.id),
+    deliveryRecordId: String(row.deliveryId),
+    stopNumber: row.stopNumber,
+    fromLocation: row.fromLocation ?? "",
+    toLocation: row.toLocation ?? "",
+    dropoffLocation: row.dropoffLocation ?? "",
+    distanceKm: row.distanceKm != null ? Number(row.distanceKm) : null,
+    plannedDistanceKm: row.plannedDistanceKm != null ? Number(row.plannedDistanceKm) : null,
+    startedAt: row.startedTime?.toISOString() ?? null,
+    arrivedAt: row.arrivedTime?.toISOString() ?? null,
+    durationMins: row.durationMins ?? null,
+    status: row.status,
+    startGps: row.startLat != null && row.startLng != null ? { lat: row.startLat, lng: row.startLng } : null,
+    riderGps: row.riderLat != null && row.riderLng != null ? { lat: row.riderLat, lng: row.riderLng } : null,
+    riderIp: row.riderIp ?? null,
   };
 }
 
 export async function getStopsForDelivery(
-  deliveryRecordId: string
+  deliveryRecordId: string,
+  tx: Executor = db
 ): Promise<DeliveryStop[]> {
-  // ARRAYJOIN expands to display names — filter client-side instead.
-  const map = await getStopsForDeliveries([deliveryRecordId]);
+  const map = await getStopsForDeliveries([deliveryRecordId], tx);
   return map.get(deliveryRecordId) ?? [];
 }
 
 export async function getStopsForDeliveries(
-  deliveryIds: string[]
+  deliveryIds: string[],
+  tx: Executor = db
 ): Promise<Map<string, DeliveryStop[]>> {
   if (!deliveryIds.length) return new Map();
 
-  // ARRAYJOIN({Delivery}) in Airtable formulas expands to display names, not
-  // record IDs — so FIND(recordId, ARRAYJOIN({Delivery})) never matches.
-  // Fetch recent stops and filter client-side using the Delivery field which
-  // returns actual record IDs in the API response.
-  const idSet = new Set(deliveryIds);
-  const records = await airtableList<StopFields>("Delivery Stops", {
-    filterByFormula: `IS_AFTER(CREATED_TIME(), DATEADD(TODAY(), -60, "days"))`,
-    sort: [{ field: "Stop Number", direction: "asc" as const }],
-    maxRecords: "500",
-  });
+  const pks = deliveryIds.map(Number).filter(Number.isInteger);
+  const rows = await tx
+    .select()
+    .from(deliveryStops)
+    .where(inArray(deliveryStops.deliveryId, pks))
+    .orderBy(asc(deliveryStops.stopNumber));
 
   const map = new Map<string, DeliveryStop[]>();
-  for (const record of records) {
-    const deliveryRecId = record.fields["Delivery"]?.[0];
-    if (!deliveryRecId || !idSet.has(deliveryRecId)) continue;
-    const stop = mapToStop(record);
-    const existing = map.get(deliveryRecId) ?? [];
+  for (const row of rows) {
+    const key = String(row.deliveryId);
+    const stop = mapToStop(row);
+    const existing = map.get(key) ?? [];
     existing.push(stop);
-    map.set(deliveryRecId, existing);
+    map.set(key, existing);
   }
   return map;
 }
 
-export async function createStop(data: {
-  deliveryRecordId: string;
-  stopNumber: number;
-  fromLocation: string;
-  toLocation: string;
-  distanceKm?: number;
-}): Promise<DeliveryStop> {
-  const record = await airtableCreate<StopFields>("Delivery Stops", {
-    Delivery: [data.deliveryRecordId],
-    "Stop Number": data.stopNumber,
-    "From Location": data.fromLocation,
-    "To Location": data.toLocation,
-    ...(data.distanceKm !== undefined && { "Distance (km)": data.distanceKm }),
-    Status: "Pending",
-  });
-  return mapToStop(record);
+/** Clears all stops for a delivery so they can be re-created (used when editing a delivery's route, not when deleting the delivery itself — that case relies on the ON DELETE CASCADE FK instead). */
+export async function replaceStopsForDelivery(deliveryRecordId: string, tx: Executor = db): Promise<void> {
+  const pk = Number(deliveryRecordId);
+  await tx.delete(deliveryStops).where(eq(deliveryStops.deliveryId, pk));
+}
+
+export async function createStop(
+  data: {
+    deliveryRecordId: string;
+    stopNumber: number;
+    fromLocation: string;
+    toLocation: string;
+    distanceKm?: number;
+  },
+  tx: Executor = db
+): Promise<DeliveryStop> {
+  const [row] = await tx
+    .insert(deliveryStops)
+    .values({
+      deliveryId: Number(data.deliveryRecordId),
+      stopNumber: data.stopNumber,
+      fromLocation: data.fromLocation,
+      toLocation: data.toLocation,
+      distanceKm: data.distanceKm !== undefined ? String(data.distanceKm) : undefined,
+      status: "Pending",
+    })
+    .returning();
+  return mapToStop(row);
 }
 
 export async function startStop(
   stopId: string,
-  gps?: { lat: number; lng: number }
+  gps?: { lat: number; lng: number },
+  tx: Executor = db
 ): Promise<void> {
-  const fields: Record<string, unknown> = {
-    Status: "In Progress",
-    "Started Time": new Date().toISOString(),
-  };
-  if (gps) {
-    fields["Start GPS"] = `${gps.lat.toFixed(6)},${gps.lng.toFixed(6)}`;
-    console.log("[startStop] Start GPS stored:", fields["Start GPS"]);
-  } else {
-    console.warn("[startStop] No GPS provided — start location not recorded");
-  }
-  await airtableUpdate("Delivery Stops", stopId, fields);
+  const pk = Number(stopId);
+  await tx
+    .update(deliveryStops)
+    .set({
+      status: "In Progress",
+      startedTime: new Date(),
+      ...(gps && { startLat: gps.lat, startLng: gps.lng }),
+    })
+    .where(eq(deliveryStops.id, pk));
 }
 
 export async function completeStop(
@@ -128,42 +110,26 @@ export async function completeStop(
     gps?: { lat: number; lng: number };
     ip?: string;
     startedAt?: string;
-  }
+  },
+  tx: Executor = db
 ): Promise<void> {
+  const pk = Number(stopId);
   const now = new Date();
-  const fields: Record<string, unknown> = {
-    Status: "Completed",
-    "Arrived Time": now.toISOString(),
-  };
 
+  let durationMins: number | undefined;
   if (data.startedAt) {
     const startTime = new Date(data.startedAt);
-    const durationMins = Math.round(
-      (now.getTime() - startTime.getTime()) / 60000
-    );
-    fields["Duration (mins)"] = durationMins;
+    durationMins = Math.round((now.getTime() - startTime.getTime()) / 60000);
   }
 
-  if (data.gps) {
-    fields["Rider GPS"] = `${data.gps.lat.toFixed(6)}, ${data.gps.lng.toFixed(6)}`;
-  }
-
-  if (data.ip) {
-    fields["Rider IP"] = data.ip;
-  }
-
-  await airtableUpdate("Delivery Stops", stopId, fields);
-}
-
-export async function deleteStopsForDelivery(
-  deliveryRecordId: string
-): Promise<void> {
-  const stops = await getStopsForDelivery(deliveryRecordId);
-  await Promise.all(
-    stops.map((s) =>
-      import("@/lib/airtable").then(({ airtableDelete }) =>
-        airtableDelete("Delivery Stops", s.id)
-      )
-    )
-  );
+  await tx
+    .update(deliveryStops)
+    .set({
+      status: "Completed",
+      arrivedTime: now,
+      ...(durationMins !== undefined && { durationMins }),
+      ...(data.gps && { riderLat: data.gps.lat, riderLng: data.gps.lng }),
+      ...(data.ip && { riderIp: data.ip }),
+    })
+    .where(eq(deliveryStops.id, pk));
 }

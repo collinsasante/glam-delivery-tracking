@@ -1,5 +1,7 @@
-import "server-only";
-
+// No app code imports this file anymore — it's kept solely for
+// scripts/migrate-to-postgres.ts (run via plain `tsx`, outside Next's bundler,
+// where "server-only" would throw unconditionally) and is deleted once the
+// Airtable migration is fully decommissioned (see the migration plan, Phase 6).
 const BASE_URL = "https://api.airtable.com/v0";
 
 /**

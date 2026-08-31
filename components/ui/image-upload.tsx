@@ -29,14 +29,22 @@ export function ImageUpload({ value, onChange, disabled }: Props) {
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const presignRes = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: file.type }),
+      });
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignData.error ?? "Upload failed");
 
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      const putRes = await fetch(presignData.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!putRes.ok) throw new Error("Upload failed");
 
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
-      onChange(data.url);
+      onChange(presignData.publicUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {

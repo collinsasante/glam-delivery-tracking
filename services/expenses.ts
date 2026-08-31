@@ -1,65 +1,46 @@
 import "server-only";
-import {
-  airtableList,
-  airtableGet,
-  airtableCreate,
-  airtableUpdate,
-  airtableDelete,
-  escapeAirtableValue,
-} from "@/lib/airtable";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { expenses } from "@/lib/db/schema";
 import type { Expense } from "@/types/expense";
 
-interface ExpenseFields {
-  Rider?: string[];
-  "Expense Type"?: string;
-  Amount?: number;
-  Description?: string;
-  Date?: string;
-  Receipt?: { url: string }[];
-  Status?: string;
-  "Submitted At"?: string;
-  "Admin Notes"?: string;
-}
+type ExpenseRow = typeof expenses.$inferSelect;
 
-function mapToExpense(
-  record: { id: string; fields: ExpenseFields }
-): Expense {
-  const f = record.fields;
+function mapToExpense(row: ExpenseRow): Expense {
   return {
-    id: record.id,
-    riderId: f["Rider"]?.[0] ?? "",
+    id: String(row.id),
+    riderId: row.riderId != null ? String(row.riderId) : "",
     riderName: null,
-    expenseType: f["Expense Type"] ?? "",
-    amount: f["Amount"] ?? 0,
-    description: f["Description"] ?? null,
-    date: f["Date"] ?? "",
-    receiptUrl: f["Receipt"]?.[0]?.url ?? null,
-    status: (f["Status"] as Expense["status"]) ?? "Pending",
-    submittedAt: f["Submitted At"] ?? "",
-    adminNotes: f["Admin Notes"] ?? null,
+    expenseType: row.expenseType,
+    amount: Number(row.amount),
+    description: row.description ?? null,
+    date: row.date,
+    receiptUrl: row.receiptUrl ?? null,
+    status: row.status,
+    submittedAt: row.submittedAt.toISOString(),
+    adminNotes: row.adminNotes ?? null,
   };
 }
 
 export async function getExpenseById(id: string): Promise<Expense | null> {
-  try {
-    const record = await airtableGet<ExpenseFields>("Expenses", id);
-    return mapToExpense(record);
-  } catch {
-    return null;
-  }
+  const pk = Number(id);
+  if (!Number.isInteger(pk)) return null;
+  const [row] = await db.select().from(expenses).where(eq(expenses.id, pk)).limit(1);
+  return row ? mapToExpense(row) : null;
 }
 
 export async function getExpenses(riderId?: string): Promise<Expense[]> {
-  const params: { sort: Array<{ field: string; direction: "asc" | "desc" }>; filterByFormula?: string } = {
-    sort: [{ field: "Submitted At", direction: "desc" }],
-  };
+  const query = db.select().from(expenses).orderBy(desc(expenses.submittedAt));
 
   if (riderId) {
-    params.filterByFormula = `FIND("${escapeAirtableValue(riderId)}", ARRAYJOIN({Rider}))`;
+    const riderPk = Number(riderId);
+    if (!Number.isInteger(riderPk)) return [];
+    const rows = await query.where(eq(expenses.riderId, riderPk));
+    return rows.map(mapToExpense);
   }
 
-  const records = await airtableList<ExpenseFields>("Expenses", params);
-  return records.map(mapToExpense);
+  const rows = await query;
+  return rows.map(mapToExpense);
 }
 
 export async function createExpense(data: {
@@ -70,21 +51,19 @@ export async function createExpense(data: {
   date: string;
   receiptUrl?: string;
 }): Promise<Expense> {
-  const fields: Record<string, unknown> = {
-    Rider: [data.riderId],
-    "Expense Type": data.expenseType,
-    Amount: data.amount,
-    Date: data.date,
-    Status: "Paid",
-    "Submitted At": new Date().toISOString(),
-  };
-  if (data.description) fields["Description"] = data.description;
-  if (data.receiptUrl) {
-    fields["Receipt"] = [{ url: data.receiptUrl }];
-  }
-
-  const record = await airtableCreate<ExpenseFields>("Expenses", fields);
-  return mapToExpense(record);
+  const [row] = await db
+    .insert(expenses)
+    .values({
+      riderId: Number(data.riderId),
+      expenseType: data.expenseType,
+      amount: String(data.amount),
+      date: data.date,
+      status: "Pending",
+      description: data.description,
+      receiptUrl: data.receiptUrl,
+    })
+    .returning();
+  return mapToExpense(row);
 }
 
 export async function updateExpenseStatus(
@@ -92,11 +71,14 @@ export async function updateExpenseStatus(
   status: Expense["status"],
   adminNotes?: string
 ): Promise<void> {
-  const fields: Record<string, unknown> = { Status: status };
-  if (adminNotes !== undefined) fields["Admin Notes"] = adminNotes;
-  await airtableUpdate("Expenses", id, fields);
+  const pk = Number(id);
+  await db
+    .update(expenses)
+    .set({ status, ...(adminNotes !== undefined && { adminNotes }) })
+    .where(eq(expenses.id, pk));
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  await airtableDelete("Expenses", id);
+  const pk = Number(id);
+  await db.delete(expenses).where(eq(expenses.id, pk));
 }

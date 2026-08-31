@@ -1,17 +1,16 @@
 export const dynamic = "force-dynamic";
 
+import { sql } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+
 export async function GET() {
-  const info = {
-    ok: true,
-    ts: new Date().toISOString(),
-    env: {
-      AUTH_SECRET: !!process.env.AUTH_SECRET,
-      FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
-      FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
-      FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
-      NEXT_PUBLIC_FIREBASE_API_KEY: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    },
-  };
-  console.log("[health] GET /api/health", JSON.stringify(info));
-  return Response.json(info);
+  try {
+    await db.execute(sql`SELECT 1`);
+    return Response.json({ ok: true, ts: new Date().toISOString() });
+  } catch (err) {
+    return Response.json(
+      { ok: false, ts: new Date().toISOString(), error: err instanceof Error ? err.message : String(err) },
+      { status: 503 }
+    );
+  }
 }

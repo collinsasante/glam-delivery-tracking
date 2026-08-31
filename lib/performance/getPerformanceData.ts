@@ -1,172 +1,116 @@
 import "server-only";
-import { airtableList } from "@/lib/airtable";
+import { and, eq, gte, inArray, lte, or } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { riders, deliveries, deliveryStops, clockEvents } from "@/lib/db/schema";
 import type { RiderRawData, StopRaw, ClockEventRaw, DateRange } from "./types";
 
-interface DeliveryFields {
-  "Delivery ID": string;
-  "Assigned Rider"?: string[];
-  Status: string;
-  "Delivery Date": string;
-  "Completed Date"?: string;
-  /** Delivery-level distance — used as fallback when the stop has no distanceKm */
-  Distance?: number;
-}
-
-interface StopFields {
-  Delivery?: string[];
-  "Stop Number"?: number;
-  "Distance (km)"?: number;
-  "Planned Distance"?: string;
-  "Duration (mins)"?: number;
-  "Arrived Time"?: string;
-  Status?: string;
-}
-
-interface ClockEventFields {
-  Rider?: string[];
-  "Event Type"?: string;
-  Date?: string;
-  Time?: string;
-  Timestamp?: string;
-  "Duration (mins)"?: number;
-}
-
-interface RiderFields {
-  "Rider ID": string;
-  Name: string;
-  "Photo URL"?: string;
-  Role?: string;
-  Active?: boolean;
-}
-
 export async function getPerformanceData(range: DateRange): Promise<RiderRawData[]> {
-  console.log(`[performance] getPerformanceData called — range: ${range.start} → ${range.end}`);
+  const riderRows = await db
+    .select()
+    .from(riders)
+    .where(and(eq(riders.active, true), eq(riders.role, "Rider")));
+  if (!riderRows.length) return [];
 
-  // 1. Active riders with role "Rider"
-  const riderRecords = await airtableList<RiderFields>("Riders", {
-    filterByFormula: `AND({Active} = TRUE(), {Role} = "Rider")`,
-    maxRecords: "200",
-  });
-  console.log(`[performance] riders found: ${riderRecords.length}`, riderRecords.map(r => ({ id: r.id, name: r.fields["Name"], role: r.fields["Role"], active: r.fields["Active"] })));
-  if (!riderRecords.length) return [];
-
-  const riders = riderRecords.map((r) => ({
+  const riderList = riderRows.map((r) => ({
     id: r.id,
-    displayId: r.fields["Rider ID"] ?? "",
-    name: r.fields["Name"] ?? "",
-    photoUrl: r.fields["Photo URL"] ?? null,
+    displayId: r.riderCode,
+    name: r.name,
+    photoUrl: r.photoUrl ?? null,
   }));
 
-  // 2. Fetch deliveries in range.
-  // Primary: all deliveries by Delivery Date (always works).
-  // Secondary: also try completed deliveries by Completed Date so "today"
-  //   reflects actual completion day. Falls back gracefully if the field
-  //   doesn't exist in Airtable yet.
-  const byDeliveryDate = await airtableList<DeliveryFields>("Deliveries", {
-    filterByFormula: `AND({Delivery Date} >= "${range.start}", {Delivery Date} <= "${range.end}")`,
-    maxRecords: "500",
-  });
+  // Deliveries in range: by delivery date, or completed within range (so "today"
+  // reflects actual completion day even if the delivery was scheduled earlier).
+  const deliveryRows = await db
+    .select({
+      id: deliveries.id,
+      assignedRiderId: deliveries.assignedRiderId,
+      deliveryDate: deliveries.deliveryDate,
+      distanceKm: deliveries.distanceKm,
+      status: deliveries.status,
+    })
+    .from(deliveries)
+    .where(
+      or(
+        and(gte(deliveries.deliveryDate, range.start), lte(deliveries.deliveryDate, range.end)),
+        and(
+          eq(deliveries.status, "Completed"),
+          gte(deliveries.completedDate, range.start),
+          lte(deliveries.completedDate, range.end)
+        )
+      )
+    );
 
-  let byCompletedDate: typeof byDeliveryDate = [];
-  try {
-    byCompletedDate = await airtableList<DeliveryFields>("Deliveries", {
-      filterByFormula: `AND({Status} = "Completed", {Completed Date} >= "${range.start}", {Completed Date} <= "${range.end}")`,
-      maxRecords: "500",
-    });
-  } catch {
-    // Completed Date field not yet added to Airtable — skip
-  }
+  const deliveryMeta = new Map(
+    deliveryRows.map((d) => [
+      d.id,
+      {
+        riderId: d.assignedRiderId,
+        date: d.deliveryDate,
+        distanceKm: d.distanceKm != null ? Number(d.distanceKm) : null,
+        deliveryStatus: d.status,
+      },
+    ])
+  );
 
-  // Merge, deduplicating by record ID
-  const seen = new Set(byDeliveryDate.map((r) => r.id));
-  const deliveryRecords = [
-    ...byDeliveryDate,
-    ...byCompletedDate.filter((r) => !seen.has(r.id)),
-  ];
-  console.log(`[performance] deliveries in range: ${deliveryRecords.length}`, deliveryRecords.slice(0, 3).map(r => ({ id: r.id, date: r.fields["Delivery Date"], rider: r.fields["Assigned Rider"]?.[0], status: r.fields["Status"] })));
+  const deliveryIds = deliveryRows.map((d) => d.id);
+  const stopsByRider = new Map<number, StopRaw[]>();
 
-  const deliveryMeta = new Map<string, { riderId: string | null; date: string; distanceKm: number | null; deliveryStatus: string }>();
-  for (const rec of deliveryRecords) {
-    deliveryMeta.set(rec.id, {
-      riderId: rec.fields["Assigned Rider"]?.[0] ?? null,
-      date: rec.fields["Delivery Date"] ?? "",
-      distanceKm: rec.fields["Distance"] ?? null,
-      deliveryStatus: rec.fields["Status"] ?? "Pending",
-    });
-  }
-
-  const deliveryIds = deliveryRecords.map((r) => r.id);
-  const stopsByRider = new Map<string, StopRaw[]>();
-
-  // 3. Stops for those deliveries — ARRAYJOIN({Delivery}) returns display names not record IDs,
-  // so we cannot filter by delivery ID in Airtable formulas. Instead, pull all stops and join
-  // client-side using the Delivery field which returns actual record IDs in the API response.
   if (deliveryIds.length > 0) {
-    const deliveryIdSet = new Set(deliveryIds);
-    const stopRecords = await airtableList<StopFields>("Delivery Stops", {
-      sort: [{ field: "Stop Number", direction: "asc" }],
-      maxRecords: "2000",
-    });
-    console.log(`[performance] total stops fetched: ${stopRecords.length}, delivery IDs to match: ${deliveryIds.length}`);
+    const stopRows = await db
+      .select()
+      .from(deliveryStops)
+      .where(inArray(deliveryStops.deliveryId, deliveryIds))
+      .orderBy(deliveryStops.stopNumber);
 
-    for (const rec of stopRecords) {
-      const deliveryRecId = rec.fields["Delivery"]?.[0];
-      if (!deliveryRecId || !deliveryIdSet.has(deliveryRecId)) continue;
-      const meta = deliveryMeta.get(deliveryRecId);
+    for (const stop of stopRows) {
+      const meta = deliveryMeta.get(stop.deliveryId);
       if (!meta?.riderId) continue;
 
       const riderId = meta.riderId;
       if (!stopsByRider.has(riderId)) stopsByRider.set(riderId, []);
-      const pd = rec.fields["Planned Distance"];
-      const stopDistKm = rec.fields["Distance (km)"] ?? meta.distanceKm ?? null;
+      const stopDistKm = stop.distanceKm != null ? Number(stop.distanceKm) : meta.distanceKm;
       // If the stop's own status is still Pending but the delivery was marked Completed
       // (old flow: delivery marked directly without going through stop completion), treat
       // the stop as Completed so historical deliveries count toward performance.
-      const rawStopStatus = rec.fields["Status"] ?? "Pending";
       const effectiveStatus: StopRaw["status"] =
-        rawStopStatus === "Completed" || rawStopStatus === "In Progress"
-          ? (rawStopStatus as StopRaw["status"])
+        stop.status === "Completed" || stop.status === "In Progress"
+          ? stop.status
           : meta.deliveryStatus === "Completed"
           ? "Completed"
           : "Pending";
       stopsByRider.get(riderId)!.push({
-        id: rec.id,
+        id: String(stop.id),
         distanceKm: stopDistKm,
-        plannedDistanceKm: pd ? parseFloat(pd) || null : null,
-        durationMins: rec.fields["Duration (mins)"] ?? null,
+        plannedDistanceKm: stop.plannedDistanceKm != null ? Number(stop.plannedDistanceKm) : null,
+        durationMins: stop.durationMins ?? null,
         status: effectiveStatus,
         deliveryDate: meta.date,
-        arrivedAt: rec.fields["Arrived Time"] ?? null,
+        arrivedAt: stop.arrivedTime?.toISOString() ?? null,
       });
     }
   }
 
-  // 4. Clock events for the period
-  const clockRecords = await airtableList<ClockEventFields>("Clock Events", {
-    filterByFormula: `AND({Date} >= "${range.start}", {Date} <= "${range.end}")`,
-    sort: [{ field: "Timestamp", direction: "asc" }],
-  });
-  console.log(`[performance] clock events in range: ${clockRecords.length}`, clockRecords.slice(0, 3).map(r => ({ id: r.id, rider: r.fields["Rider"]?.[0], eventType: r.fields["Event Type"], date: r.fields["Date"] })));
+  const clockRows = await db
+    .select()
+    .from(clockEvents)
+    .where(and(gte(clockEvents.eventDate, range.start), lte(clockEvents.eventDate, range.end)))
+    .orderBy(clockEvents.eventTimestamp);
 
-  const clockByRider = new Map<string, ClockEventRaw[]>();
-  for (const rec of clockRecords) {
-    const riderId = rec.fields["Rider"]?.[0];
-    if (!riderId) continue;
-    if (!clockByRider.has(riderId)) clockByRider.set(riderId, []);
-    clockByRider.get(riderId)!.push({
-      eventType: (rec.fields["Event Type"] as ClockEventRaw["eventType"]) ?? "Clock In",
-      date: rec.fields["Date"] ?? "",
-      time: rec.fields["Time"] ?? "",
-      timestamp: rec.fields["Timestamp"] ?? "",
-      durationMins: rec.fields["Duration (mins)"] ?? null,
+  const clockByRider = new Map<number, ClockEventRaw[]>();
+  for (const rec of clockRows) {
+    if (rec.riderId == null) continue;
+    if (!clockByRider.has(rec.riderId)) clockByRider.set(rec.riderId, []);
+    clockByRider.get(rec.riderId)!.push({
+      eventType: rec.eventType,
+      date: rec.eventDate,
+      time: rec.eventTime,
+      timestamp: rec.eventTimestamp.toISOString(),
+      durationMins: rec.durationMins ?? null,
     });
   }
 
-  // 5. Assemble
-  console.log(`[performance] stops by rider:`, Object.fromEntries([...stopsByRider.entries()].map(([k, v]) => [k, v.length])));
-  console.log(`[performance] clock events by rider:`, Object.fromEntries([...clockByRider.entries()].map(([k, v]) => [k, v.length])));
-  return riders.map((rider) => ({
-    riderId: rider.id,
+  return riderList.map((rider) => ({
+    riderId: String(rider.id),
     displayId: rider.displayId,
     name: rider.name,
     photoUrl: rider.photoUrl,

@@ -2,10 +2,17 @@
 
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db/client";
 import { completeStop, startStop, createStop, getStopsForDelivery } from "@/services/stops";
-import { updateDeliveryStatus, getDeliveryById, getDeliveriesForRider, updateDelivery } from "@/services/deliveries";
+import {
+  updateDeliveryStatus,
+  getDeliveryById,
+  getDeliveriesForRider,
+  updateDelivery,
+} from "@/services/deliveries";
 import { getAdminRiders } from "@/services/riders";
 import { sendPushToTokens } from "@/lib/notifications";
+import { sendMattermostNotification } from "@/lib/mattermost";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -53,33 +60,38 @@ export async function startDeliveryAction(
       }
     }
 
-    // If no stop exists yet, auto-create one
-    let resolvedStopId = stopId;
-    if (!resolvedStopId) {
-      const fromLocation = delivery.warehouse ?? "Warehouse";
-      const stop = await createStop({
-        deliveryRecordId: deliveryId,
-        stopNumber: 1,
-        fromLocation,
-        toLocation: delivery.dropoffLocation,
-        ...(distanceKm !== undefined && { distanceKm }),
-      });
-      resolvedStopId = stop.id;
-    }
+    await db.transaction(async (tx) => {
+      // If no stop exists yet, auto-create one
+      let resolvedStopId = stopId;
+      if (!resolvedStopId) {
+        const fromLocation = delivery.warehouse ?? "Warehouse";
+        const stop = await createStop(
+          {
+            deliveryRecordId: deliveryId,
+            stopNumber: 1,
+            fromLocation,
+            toLocation: delivery.dropoffLocation,
+            ...(distanceKm !== undefined && { distanceKm }),
+          },
+          tx
+        );
+        resolvedStopId = stop.id;
+      }
 
-    await updateDeliveryStatus(deliveryId, "In Progress", {
-      pickupTime: now.toTimeString().slice(0, 5),
+      await updateDeliveryStatus(
+        deliveryId,
+        "In Progress",
+        { pickupTime: now.toTimeString().slice(0, 5) },
+        tx
+      );
+
+      if (distanceKm !== undefined && distanceKm !== delivery.distance) {
+        await updateDelivery(deliveryId, { distance: distanceKm }, tx);
+      }
+
+      await startStop(resolvedStopId, riderGps, tx);
     });
 
-    // Update delivery distance with measured value if available
-    if (distanceKm !== undefined && distanceKm !== delivery.distance) {
-      await import("@/services/deliveries").then(({ updateDelivery }) =>
-        updateDelivery(deliveryId, { distance: distanceKm })
-      );
-    }
-
-    console.log("[startDeliveryAction] Starting stop", resolvedStopId, "GPS:", riderGps ?? "none", "distance:", distanceKm ?? "not measured");
-    await startStop(resolvedStopId, riderGps);
     revalidatePath("/rider");
     return { success: true };
   } catch (err) {
@@ -102,31 +114,33 @@ export async function markArrivedAction(
 
   try {
     const now = new Date();
+    let delivered = false;
 
-    if (stopId) {
-      try {
-        await completeStop(stopId, data);
-      } catch (stopErr) {
-        console.error("[markArrived] completeStop failed (non-fatal):", stopErr);
-        // Stop update failed (e.g. missing Airtable field) — continue to mark delivery completed
+    await db.transaction(async (tx) => {
+      if (stopId) {
+        await completeStop(stopId, data, tx);
+
+        const stops = await getStopsForDelivery(deliveryId, tx);
+        const allCompleted = stops.length === 0 || stops.every((s) => s.status === "Completed");
+        if (!allCompleted) return;
       }
 
-      // Check if all stops are completed
-      const stops = await getStopsForDelivery(deliveryId).catch(() => []);
-      const allCompleted = stops.length === 0 || stops.every((s) => s.id === stopId || s.status === "Completed");
-      if (!allCompleted) {
-        revalidatePath("/rider");
-        return { success: true };
-      }
-    }
-
-    // No stop (or all stops done) — mark delivery completed
-    const delivery = await getDeliveryById(deliveryId);
-    await updateDeliveryStatus(deliveryId, "Completed", {
-      deliveryTime: now.toTimeString().slice(0, 5),
+      await updateDeliveryStatus(
+        deliveryId,
+        "Completed",
+        { deliveryTime: now.toTimeString().slice(0, 5) },
+        tx
+      );
+      delivered = true;
     });
 
+    if (!delivered) {
+      revalidatePath("/rider");
+      return { success: true };
+    }
+
     // Notify admins
+    const delivery = await getDeliveryById(deliveryId);
     const admins = await getAdminRiders().catch(() => []);
     const adminTokens = admins.map((a) => a.fcmToken).filter(Boolean) as string[];
     if (adminTokens.length > 0) {
@@ -137,6 +151,10 @@ export async function markArrivedAction(
         { type: "delivery_completed", deliveryId }
       );
     }
+
+    void sendMattermostNotification(
+      `✅ **Delivery completed** — ${delivery?.deliveryId ?? deliveryId} for ${delivery?.customerName ?? "a customer"}`
+    );
 
     revalidatePath("/rider");
     revalidatePath(`/rider/deliveries/${deliveryId}`);
@@ -159,8 +177,18 @@ export async function addDeliveryCommentAction(
 
   try {
     // Save comment and mark delivery On Hold so admin knows to follow up
-    await updateDelivery(deliveryId, { riderComment: trimmed });
-    await updateDeliveryStatus(deliveryId, "On Hold");
+    await db.transaction(async (tx) => {
+      await updateDelivery(deliveryId, { riderComment: trimmed }, tx);
+      await updateDeliveryStatus(deliveryId, "On Hold", undefined, tx);
+    });
+
+    const delivery = await getDeliveryById(deliveryId).catch(() => null);
+    const riderName = (session.user as { name?: string } | undefined)?.name ?? "A rider";
+    void sendMattermostNotification(
+      `⚠️ **Delivery on hold** — ${delivery?.deliveryId ?? deliveryId} for ${delivery?.customerName ?? "a customer"}\n` +
+        `${riderName}: "${trimmed}"`
+    );
+
     revalidatePath(`/rider/deliveries/${deliveryId}`);
     revalidatePath("/rider");
     return { success: true };

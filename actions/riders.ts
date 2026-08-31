@@ -45,7 +45,22 @@ export async function createRiderAction(data: unknown): Promise<ActionResult> {
     const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase();
     await adminAuth.createUser({ email, password: tempPassword, displayName: name });
 
-    await createRider({ name, email, phone, role, vehicleType, active });
+    try {
+      await createRider({ name, email, phone, role, vehicleType, active });
+    } catch (dbErr) {
+      // Postgres insert failed after the Firebase user was created — best-effort
+      // compensation so we don't leave an orphaned Firebase account with no rider row.
+      const fbUser = await adminAuth.getUserByEmail(email).catch(() => null);
+      if (fbUser) {
+        await adminAuth.deleteUser(fbUser.uid).catch((cleanupErr) => {
+          console.error(
+            `[createRiderAction] failed to roll back orphaned Firebase user for ${email} — manual cleanup needed:`,
+            cleanupErr
+          );
+        });
+      }
+      throw dbErr;
+    }
 
     // Send invite email — use Resend (branded) if configured, otherwise Firebase
     if (process.env.RESEND_API_KEY) {
@@ -117,11 +132,22 @@ export async function deleteRiderAction(id: string): Promise<ActionResult> {
 
   try {
     const rider = await getRiderById(id);
+    // Delete the Postgres row first (cheap, and history-preserving FKs mean this
+    // never fails on referential integrity). If the Firebase delete below fails,
+    // the rider simply can't sign in anymore — safe to log and move on rather
+    // than leaving the Postgres row (and thus sign-in access) around.
+    await deleteRider(id);
     if (rider) {
       const fbUser = await adminAuth.getUserByEmail(rider.email).catch(() => null);
-      if (fbUser) await adminAuth.deleteUser(fbUser.uid);
+      if (fbUser) {
+        await adminAuth.deleteUser(fbUser.uid).catch((cleanupErr) => {
+          console.error(
+            `[deleteRiderAction] rider ${id} deleted from Postgres but Firebase user cleanup failed — orphaned Firebase account for ${rider.email}:`,
+            cleanupErr
+          );
+        });
+      }
     }
-    await deleteRider(id);
     revalidatePath("/riders");
     revalidatePath("/staff");
     return { success: true };

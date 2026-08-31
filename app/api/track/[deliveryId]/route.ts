@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { getDeliveryById } from "@/services/deliveries";
+import { getDeliveryByCode } from "@/services/deliveries";
 import { getStopsForDelivery } from "@/services/stops";
 
 export const revalidate = 30;
@@ -11,7 +11,7 @@ export async function GET(
 ) {
   const { deliveryId } = await params;
 
-  const delivery = await getDeliveryById(deliveryId).catch(() => null);
+  const delivery = await getDeliveryByCode(deliveryId).catch(() => null);
   if (!delivery) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

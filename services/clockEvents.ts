@@ -1,69 +1,56 @@
 import "server-only";
-import { airtableList, airtableCreate, escapeAirtableValue } from "@/lib/airtable";
+import { and, desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { clockEvents } from "@/lib/db/schema";
 import type { ClockEvent } from "@/types/clockEvent";
 
-interface ClockEventFields {
-  Rider?: string[];
-  "Event Type"?: string;
-  Date?: string;
-  Time?: string;
-  Timestamp?: string;
-  "Duration (mins)"?: number;
-  /** Stored as "lat,lng" text — only set on Clock In events */
-  "Clock-in Location"?: string;
-}
+type ClockEventRow = typeof clockEvents.$inferSelect;
 
-function parseLocation(str?: string): { lat: number; lng: number } | null {
-  if (!str) return null;
-  const [lat, lng] = str.split(",").map((s) => parseFloat(s.trim()));
-  if (isNaN(lat) || isNaN(lng)) return null;
-  return { lat, lng };
-}
-
-function mapToClockEvent(
-  record: { id: string; fields: ClockEventFields }
-): ClockEvent {
-  const f = record.fields;
+function mapToClockEvent(row: ClockEventRow): ClockEvent {
   return {
-    id: record.id,
-    riderId: f["Rider"]?.[0] ?? "",
-    eventType: (f["Event Type"] as ClockEvent["eventType"]) ?? "Clock In",
-    date: f["Date"] ?? "",
-    time: f["Time"] ?? "",
-    timestamp: f["Timestamp"] ?? "",
-    durationMins: f["Duration (mins)"] ?? null,
-    clockInLocation: parseLocation(f["Clock-in Location"]),
+    id: String(row.id),
+    riderId: row.riderId != null ? String(row.riderId) : "",
+    eventType: row.eventType,
+    date: row.eventDate,
+    time: row.eventTime,
+    timestamp: row.eventTimestamp.toISOString(),
+    durationMins: row.durationMins ?? null,
+    clockInLocation:
+      row.clockInLat != null && row.clockInLng != null
+        ? { lat: row.clockInLat, lng: row.clockInLng }
+        : null,
   };
 }
 
 export async function getTodayClockEvents(riderId: string): Promise<ClockEvent[]> {
-  const today = new Date().toISOString().split("T")[0];
-  const records = await airtableList<ClockEventFields>("Clock Events", {
-    filterByFormula: `{Date} = "${escapeAirtableValue(today)}"`,
-    sort: [{ field: "Timestamp", direction: "asc" as const }],
-  });
-  return records
-    .filter((r) => r.fields["Rider"]?.[0] === riderId)
-    .map(mapToClockEvent);
+  const riderPk = Number(riderId);
+  if (!Number.isInteger(riderPk)) return [];
+
+  const rows = await db
+    .select()
+    .from(clockEvents)
+    .where(
+      and(eq(clockEvents.riderId, riderPk), eq(clockEvents.eventDate, todayDateString()))
+    )
+    .orderBy(clockEvents.eventTimestamp);
+  return rows.map(mapToClockEvent);
 }
 
-export async function getLastClockEvent(
-  riderId: string
-): Promise<ClockEvent | null> {
-  // ARRAYJOIN({Rider}) in Airtable formulas expands to display names, not record
-  // IDs — so FIND(riderId, ARRAYJOIN({Rider})) never matches. Fetch recent events
-  // and filter client-side by record ID instead.
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 14);
-  const cutoffDate = cutoff.toISOString().split("T")[0];
+function todayDateString(): string {
+  return new Date().toISOString().split("T")[0];
+}
 
-  const records = await airtableList<ClockEventFields>("Clock Events", {
-    filterByFormula: `{Date} >= "${cutoffDate}"`,
-    sort: [{ field: "Timestamp", direction: "desc" as const }],
-  });
+export async function getLastClockEvent(riderId: string): Promise<ClockEvent | null> {
+  const riderPk = Number(riderId);
+  if (!Number.isInteger(riderPk)) return null;
 
-  const match = records.find((r) => r.fields["Rider"]?.[0] === riderId);
-  return match ? mapToClockEvent(match) : null;
+  const [row] = await db
+    .select()
+    .from(clockEvents)
+    .where(eq(clockEvents.riderId, riderPk))
+    .orderBy(desc(clockEvents.eventTimestamp))
+    .limit(1);
+  return row ? mapToClockEvent(row) : null;
 }
 
 export async function isClockedIn(riderId: string): Promise<boolean> {
@@ -79,16 +66,12 @@ export async function autoClockOutIfNeeded(riderId: string): Promise<void> {
   const last = await getLastClockEvent(riderId);
   if (!last || last.eventType !== "Clock In") return;
 
-  const today = new Date().toISOString().split("T")[0];
-  // Use the explicit date field first, then fall back to the timestamp prefix.
-  // If neither is available the rider is considered clocked in today (safe default).
+  const today = todayDateString();
   const lastDate =
-    last.date?.slice(0, 10) ||
-    (last.timestamp ? last.timestamp.slice(0, 10) : today);
+    last.date?.slice(0, 10) || (last.timestamp ? last.timestamp.slice(0, 10) : today);
 
   if (lastDate >= today) return; // clocked in today or in the future — nothing to do
 
-  // Last clock-in was a previous day — auto clock out at midnight of that day
   const clockInTime = last.timestamp ? new Date(last.timestamp) : new Date(lastDate + "T08:00:00");
   const midnight = new Date(lastDate + "T23:59:59");
   const durationMins = Math.max(1, Math.round((midnight.getTime() - clockInTime.getTime()) / 60000));
@@ -102,19 +85,18 @@ export async function createClockEvent(data: {
   gps?: { lat: number; lng: number };
 }): Promise<ClockEvent> {
   const now = new Date();
-  const fields: Record<string, unknown> = {
-    Rider: [data.riderId],
-    "Event Type": data.eventType,
-    Date: now.toISOString().split("T")[0],
-    Time: now.toTimeString().slice(0, 5),
-    Timestamp: now.toISOString(),
-    ...(data.durationMins !== undefined && {
-      "Duration (mins)": data.durationMins,
-    }),
-  };
-  if (data.eventType === "Clock In" && data.gps) {
-    fields["Clock-in Location"] = `${data.gps.lat.toFixed(6)},${data.gps.lng.toFixed(6)}`;
-  }
-  const record = await airtableCreate<ClockEventFields>("Clock Events", fields);
-  return mapToClockEvent(record);
+  const [row] = await db
+    .insert(clockEvents)
+    .values({
+      riderId: Number(data.riderId),
+      eventType: data.eventType,
+      eventDate: now.toISOString().split("T")[0],
+      eventTime: now.toTimeString().slice(0, 5),
+      eventTimestamp: now,
+      durationMins: data.durationMins,
+      ...(data.eventType === "Clock In" &&
+        data.gps && { clockInLat: data.gps.lat, clockInLng: data.gps.lng }),
+    })
+    .returning();
+  return mapToClockEvent(row);
 }

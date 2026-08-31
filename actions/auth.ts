@@ -42,12 +42,25 @@ export async function signUpAction(
       displayName: parsed.data.name,
     });
 
-    await createRider({
-      name: parsed.data.name,
-      email: parsed.data.email,
-      phone: parsed.data.phone,
-      role: "Rider",
-    });
+    try {
+      await createRider({
+        name: parsed.data.name,
+        email: parsed.data.email,
+        phone: parsed.data.phone,
+        role: "Rider",
+      });
+    } catch (dbErr) {
+      const fbUser = await adminAuth.getUserByEmail(parsed.data.email).catch(() => null);
+      if (fbUser) {
+        await adminAuth.deleteUser(fbUser.uid).catch((cleanupErr) => {
+          console.error(
+            `[signUpAction] failed to roll back orphaned Firebase user for ${parsed.data.email} — manual cleanup needed:`,
+            cleanupErr
+          );
+        });
+      }
+      throw dbErr;
+    }
 
     return { success: true };
   } catch (err: unknown) {
