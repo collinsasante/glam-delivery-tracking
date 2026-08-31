@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN ?? "";
+const cdnDomain = process.env.CDN_DOMAIN ?? "";
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -15,7 +15,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com",
       "worker-src 'self'",
       "style-src 'self' 'unsafe-inline'",
-      `img-src 'self' data: blob: https://${cloudfrontDomain}`,
+      `img-src 'self' data: blob: https://${cdnDomain}`,
       "font-src 'self'",
       "connect-src 'self' https://*.googleapis.com https://router.project-osrm.org https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com",
       "frame-src 'none'",
@@ -32,11 +32,11 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
-    remotePatterns: cloudfrontDomain
+    remotePatterns: cdnDomain
       ? [
           {
             protocol: "https",
-            hostname: cloudfrontDomain,
+            hostname: cdnDomain,
           },
         ]
       : [],

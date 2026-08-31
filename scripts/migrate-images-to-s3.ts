@@ -1,12 +1,12 @@
 /**
  * One-time migration: copy existing Cloudinary / Airtable-attachment image URLs
- * into S3 and rewrite the corresponding DB columns to the new CloudFront URL.
+ * into S3 and rewrite the corresponding DB columns to the new CDN URL.
  *
  * Run AFTER scripts/migrate-to-postgres.ts has loaded the old URLs as-is (or via
  * `npm run migrate:images`):
  *   DOTENV_CONFIG_PATH=.env.local node --conditions=react-server --import tsx -r dotenv/config scripts/migrate-images-to-s3.ts
  *
- * Requires DATABASE_URL, AWS_REGION, S3_BUCKET_NAME, CLOUDFRONT_DOMAIN.
+ * Requires DATABASE_URL, AWS_REGION, S3_BUCKET_NAME, CDN_DOMAIN.
  * (dotenv is preloaded via `-r`, not a same-file import — see the note in
  * scripts/migrate-to-postgres.ts for why that matters under ESM.)
  *
