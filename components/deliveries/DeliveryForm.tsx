@@ -1,12 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createDeliverySchema } from "@/lib/validations";
 import { createDeliveryAction, updateDeliveryAction } from "@/actions/deliveries";
+import { erpEnabledAction, lookupErpOrderAction } from "@/actions/erp";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, Search } from "lucide-react";
 import type { Rider } from "@/types/rider";
 import type { Delivery } from "@/types/delivery";
 
@@ -51,6 +52,12 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const isEdit = !!deliveryId && !!initialDelivery;
+  const [erpOn, setErpOn] = useState(false);
+  const [lookingUp, setLookingUp] = useState<number | null>(null);
+
+  useEffect(() => {
+    erpEnabledAction().then(setErpOn).catch(() => setErpOn(false));
+  }, []);
 
   const {
     register,
@@ -102,6 +109,37 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
     control,
     name: "destinations",
   });
+
+  // Prefill a destination from an ERP Sales Order / Sales Invoice.
+  async function fillFromErp(index: number) {
+    const ref = (watch(`destinations.${index}.orderId`) ?? "").trim();
+    if (!ref) {
+      toast.error("Enter the ERP order number first (e.g. SAL-ORD-2026-00012).");
+      return;
+    }
+    setLookingUp(index);
+    try {
+      const res = await lookupErpOrderAction(ref);
+      if ("error" in res) {
+        toast.error(res.error);
+        return;
+      }
+      const o = res.order;
+      setValue(`destinations.${index}.orderId`, o.ref);
+      setValue(`destinations.${index}.customerName`, o.customerName, { shouldValidate: true });
+      setValue(`destinations.${index}.customerPhone`, o.phone);
+      if (o.address) {
+        setValue(`destinations.${index}.dropoffLocation`, o.address, { shouldValidate: true });
+        setValue(`destinations.${index}.coordinates`, null);
+      }
+      if (index === 0 && o.warehouse) setValue("warehouse", o.warehouse);
+      if (index === 0 && o.deliveryDate) setValue("deliveryDate", o.deliveryDate);
+      const items = o.items.map((it) => `${it.qty} ${it.uom} ${it.item}`).join(", ");
+      toast.success(`Loaded ${o.ref}${items ? `: ${items}` : ""}`);
+    } finally {
+      setLookingUp(null);
+    }
+  }
 
   function onSubmit(data: FormData) {
     startTransition(async () => {
@@ -278,13 +316,31 @@ export function DeliveryForm({ riders, deliveryId, initialDelivery }: Props) {
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Order ID</Label>
-                <Input
-                  {...register(`destinations.${index}.orderId`)}
-                  placeholder="ORD-001"
-                  className={
-                    errors.destinations?.[index]?.orderId ? "border-red-400" : ""
-                  }
-                />
+                <div className="flex gap-2">
+                  <Input
+                    {...register(`destinations.${index}.orderId`)}
+                    placeholder={erpOn ? "SAL-ORD-2026-00012" : "ORD-001"}
+                    className={
+                      errors.destinations?.[index]?.orderId ? "border-red-400" : ""
+                    }
+                  />
+                  {erpOn && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fillFromErp(index)}
+                      disabled={lookingUp !== null}
+                      title="Fill customer, phone and address from the ERP order"
+                    >
+                      {lookingUp === index ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                      <span className="ml-1.5 hidden sm:inline">ERP</span>
+                    </Button>
+                  )}
+                </div>
                 {errors.destinations?.[index]?.orderId && (
                   <p className="text-xs text-red-500">
                     {errors.destinations[index]?.orderId?.message}

@@ -9,12 +9,14 @@ import {
   createDeliveryRecord,
   getNextDeliveryNumber,
   deleteDelivery,
+  getDeliveryById,
   updateDelivery,
 } from "@/services/deliveries";
 import { createStop, replaceStopsForDelivery } from "@/services/stops";
 import { getRiderById } from "@/services/riders";
 import { sendPushNotification } from "@/lib/notifications";
 import { sendMattermostNotification } from "@/lib/mattermost";
+import { pushErpDeliveryStatus } from "@/lib/erp";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -37,6 +39,7 @@ export async function createDeliveryAction(
   const { warehouse, assignedRiderId, priority, deliveryDate, notes, destinations } =
     parsed.data;
 
+  const created: { deliveryCode: string; orderId: string }[] = [];
   try {
     await db.transaction(async (tx) => {
       const baseNum = await getNextDeliveryNumber(tx);
@@ -66,6 +69,8 @@ export async function createDeliveryAction(
           },
           tx
         );
+
+        created.push({ deliveryCode: deliveryId, orderId: dest.orderId });
 
         const fromLocation =
           i === 0 ? warehouse : destinations[i - 1].dropoffLocation;
@@ -98,6 +103,19 @@ export async function createDeliveryAction(
         { type: "delivery_assigned" }
       );
     }
+
+    // Tell the ERP (no-op unless configured and the order is an ERP order).
+    await Promise.all(
+      created.map((c) =>
+        pushErpDeliveryStatus({
+          orderId: c.orderId,
+          deliveryCode: c.deliveryCode,
+          status: "Pending",
+          riderName: assignedRider?.name,
+          deliveryDate,
+        })
+      )
+    );
 
     const stopSummary =
       destinations.length > 1
@@ -184,8 +202,12 @@ export async function deleteDeliveryAction(id: string): Promise<ActionResult> {
   }
 
   try {
+    const existing = await getDeliveryById(id).catch(() => null);
     // delivery_stops rows cascade-delete via the FK — no separate cleanup needed.
     await deleteDelivery(id);
+    if (existing) {
+      await pushErpDeliveryStatus({ orderId: existing.orderId, deliveryCode: existing.deliveryId, status: "Cancelled" });
+    }
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/deliveries");
     return { success: true };
