@@ -17,18 +17,33 @@ import { pushErpDeliveryStatus } from "@/lib/erp";
 
 type ActionResult = { success: true } | { error: string };
 
+/** Riders may only act on deliveries assigned to them; admins may act on any. */
+async function loadOwnDelivery(deliveryId: string) {
+  const session = await auth();
+  if (!session?.user) return { error: "Unauthorized" as const };
+  const delivery = await getDeliveryById(deliveryId);
+  if (!delivery) return { error: "Delivery not found." as const };
+  const user = session.user as { id?: string; role?: string; name?: string };
+  if (user.role !== "Admin" && delivery.assignedRiderId !== user.id) {
+    return { error: "This delivery is not assigned to you." as const };
+  }
+  return { session, user, delivery };
+}
+
 export async function startDeliveryAction(
   deliveryId: string,
   stopId: string | null,
   riderGps?: { lat: number; lng: number }
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session) return { error: "Unauthorized" };
+  const own = await loadOwnDelivery(deliveryId);
+  if ("error" in own) return { error: own.error ?? "Unauthorized" };
+  const { session, delivery } = own;
 
   try {
     const now = new Date();
-    const delivery = await getDeliveryById(deliveryId);
-    if (!delivery) return { error: "Delivery not found." };
+    if (stopId && !(await getStopsForDelivery(deliveryId)).some((st) => st.id === stopId)) {
+      return { error: "Stop does not belong to this delivery." };
+    }
 
     // Enforce single-location rule: rider may run multiple simultaneous deliveries
     // only when they all share the same warehouse (pickup location).
@@ -118,12 +133,16 @@ export async function markArrivedAction(
     startedAt?: string;
   }
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session) return { error: "Unauthorized" };
+  const own = await loadOwnDelivery(deliveryId);
+  if ("error" in own) return { error: own.error ?? "Unauthorized" };
 
   try {
     const now = new Date();
     let delivered = false;
+
+    if (stopId && !(await getStopsForDelivery(deliveryId)).some((st) => st.id === stopId)) {
+      return { error: "Stop does not belong to this delivery." };
+    }
 
     await db.transaction(async (tx) => {
       if (stopId) {
@@ -188,8 +207,9 @@ export async function addDeliveryCommentAction(
   deliveryId: string,
   comment: string
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session) return { error: "Unauthorized" };
+  const own = await loadOwnDelivery(deliveryId);
+  if ("error" in own) return { error: own.error ?? "Unauthorized" };
+  const { session } = own;
 
   const trimmed = comment.trim();
   if (!trimmed) return { error: "Comment cannot be empty." };

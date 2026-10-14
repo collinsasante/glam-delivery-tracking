@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { Delivery } from "@/types/delivery";
+import type { BoardDelivery } from "@/lib/board-access";
 import Link from "next/link";
 
 interface Stats {
@@ -13,7 +14,7 @@ interface Stats {
 }
 
 interface BoardData {
-  deliveries: Delivery[];
+  deliveries: BoardDelivery[];
   stats: Stats;
 }
 
@@ -30,7 +31,7 @@ const STATUS_DISPLAY: Record<string, { label: string; dot: string; pill: string;
   "On Hold":     { label: "On Hold",     dot: "bg-orange-400",             pill: "bg-orange-400/15 text-orange-300 border border-orange-500/40",     color: "text-orange-400"  },
 };
 
-function shouldShow(d: Delivery, now: Date): boolean {
+function shouldShow(d: BoardDelivery, now: Date): boolean {
   if (d.status !== "Completed") return true;
 
   const today = now.toISOString().split("T")[0];

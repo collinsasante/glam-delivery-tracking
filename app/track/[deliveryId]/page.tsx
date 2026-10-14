@@ -4,7 +4,7 @@ import Image from "next/image";
 import { getDeliveryByCode } from "@/services/deliveries";
 import { getStopsForDelivery } from "@/services/stops";
 import { TrackingTimeline } from "@/components/tracking/TrackingTimeline";
-import { MapPin, Clock, CheckCircle2 } from "lucide-react";
+import { Clock, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { deliveryId } = await params;
   const delivery = await getDeliveryByCode(deliveryId);
   return {
-    title: delivery ? `Tracking · ${delivery.orderId}` : "Delivery Not Found",
+    title: delivery ? `Tracking · ${delivery.deliveryId}` : "Delivery Not Found",
   };
 }
 
@@ -53,7 +53,14 @@ export default async function TrackingPage({ params }: Props) {
 
   if (!delivery) notFound();
 
-  const stops = await getStopsForDelivery(delivery.id);
+  // Public page: never show stop addresses or the rider's GPS position.
+  const stops = (await getStopsForDelivery(delivery.id)).map((stop, i, all) => ({
+    ...stop,
+    fromLocation: "",
+    toLocation: all.length > 1 ? `Stop ${i + 1}` : "Your delivery",
+    dropoffLocation: all.length > 1 ? `Stop ${i + 1}` : "Your delivery",
+    riderGps: null,
+  }));
 
   const sc = statusConfig[delivery.status] ?? statusConfig["Pending"];
 
@@ -94,11 +101,12 @@ export default async function TrackingPage({ params }: Props) {
           </p>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
+              {/* Public page (no login): first name only, no order number or address. */}
               <p className="text-[19px] font-extrabold tracking-tight text-gray-900 truncate">
-                {delivery.customerName}
+                {delivery.customerName.trim().split(/\s+/)[0] || "Your delivery"}
               </p>
               <p className="text-xs text-gray-400 font-mono mt-1">
-                #{delivery.orderId}
+                {delivery.deliveryId}
               </p>
             </div>
             {delivery.status === "Completed" && (
@@ -108,10 +116,6 @@ export default async function TrackingPage({ params }: Props) {
             )}
           </div>
 
-          <div className="flex items-start gap-2.5 mt-[18px] pt-4 border-t border-black/[0.055] text-sm text-gray-600">
-            <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" strokeWidth={1.8} />
-            <span className="leading-snug text-[13.5px]">{delivery.dropoffLocation}</span>
-          </div>
 
           {/* Progress bar — only when there are multiple stops */}
           {stops.length > 1 && (

@@ -18,18 +18,16 @@ export async function GET(
 
   const stops = await getStopsForDelivery(delivery.id);
 
+  // Public endpoint (codes are sequential): status and timing only, first name, no order number or addresses.
   return NextResponse.json({
     deliveryId: delivery.deliveryId,
-    orderId: delivery.orderId,
-    customerName: delivery.customerName,
-    dropoffLocation: delivery.dropoffLocation,
+    customerFirstName: delivery.customerName.trim().split(/\s+/)[0] ?? "",
     status: delivery.status,
     deliveryDate: delivery.deliveryDate,
     pickupTime: delivery.pickupTime,
     deliveryTime: delivery.deliveryTime,
     stops: stops.map((s) => ({
       stopNumber: s.stopNumber,
-      dropoffLocation: s.dropoffLocation,
       status: s.status,
       arrivedAt: s.arrivedAt,
     })),

@@ -4,6 +4,8 @@ import { getRiders } from "@/services/riders";
 import { LiveBoard } from "@/components/board/LiveBoard";
 import { Clock } from "@/components/board/Clock";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { hasBoardAccess, toBoardDelivery } from "@/lib/board-access";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BoardPage() {
+  if (!(await hasBoardAccess())) redirect("/signin");
   const [deliveries, riders] = await Promise.all([
     getDeliveries({}),
     getRiders(),
@@ -33,7 +36,7 @@ export default async function BoardPage() {
 
   return (
     <LiveBoard
-      initial={{ deliveries: enriched, stats }}
+      initial={{ deliveries: enriched.map(toBoardDelivery), stats }}
       header={
         <div className="w-full flex items-center justify-between" style={{ padding: "1vw 2vw", height: "clamp(3rem, 6vw, 7rem)" }}>
           <div className="flex items-center" style={{ gap: "1.5vw" }}>
