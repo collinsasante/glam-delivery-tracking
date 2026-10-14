@@ -10,7 +10,8 @@ export async function GET(req: Request) {
   if (!boardTokenValid(key)) {
     return new NextResponse("Not found", { status: 404 });
   }
-  const res = NextResponse.redirect(new URL("/board", url.origin));
+  // Relative redirect: behind the reverse proxy req.url carries the container's internal address.
+  const res = new NextResponse(null, { status: 307, headers: { Location: "/board" } });
   res.cookies.set(BOARD_COOKIE, key!, {
     httpOnly: true,
     secure: true,
