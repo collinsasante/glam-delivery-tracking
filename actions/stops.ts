@@ -13,6 +13,7 @@ import {
 import { getAdminRiders } from "@/services/riders";
 import { sendPushToTokens } from "@/lib/notifications";
 import { sendMattermostNotification } from "@/lib/mattermost";
+import { pushErpDeliveryStatus } from "@/lib/erp";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -92,6 +93,14 @@ export async function startDeliveryAction(
       await startStop(resolvedStopId, riderGps, tx);
     });
 
+    await pushErpDeliveryStatus({
+      orderId: delivery.orderId,
+      deliveryCode: delivery.deliveryId,
+      status: "In Progress",
+      riderName: delivery.assignedRiderName,
+      deliveryDate: delivery.deliveryDate,
+    });
+
     revalidatePath("/rider");
     return { success: true };
   } catch (err) {
@@ -152,6 +161,16 @@ export async function markArrivedAction(
       );
     }
 
+    if (delivery) {
+      await pushErpDeliveryStatus({
+        orderId: delivery.orderId,
+        deliveryCode: delivery.deliveryId,
+        status: "Completed",
+        riderName: delivery.assignedRiderName,
+        completedAt: now,
+      });
+    }
+
     void sendMattermostNotification(
       `✅ **Delivery completed** — ${delivery?.deliveryId ?? deliveryId} for ${delivery?.customerName ?? "a customer"}`
     );
@@ -184,6 +203,15 @@ export async function addDeliveryCommentAction(
 
     const delivery = await getDeliveryById(deliveryId).catch(() => null);
     const riderName = (session.user as { name?: string } | undefined)?.name ?? "A rider";
+    if (delivery) {
+      await pushErpDeliveryStatus({
+        orderId: delivery.orderId,
+        deliveryCode: delivery.deliveryId,
+        status: "On Hold",
+        riderName: delivery.assignedRiderName,
+        riderComment: trimmed,
+      });
+    }
     void sendMattermostNotification(
       `⚠️ **Delivery on hold** — ${delivery?.deliveryId ?? deliveryId} for ${delivery?.customerName ?? "a customer"}\n` +
         `${riderName}: "${trimmed}"`
